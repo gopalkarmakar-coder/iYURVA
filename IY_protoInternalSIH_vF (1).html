@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iYurva Vedic AI</title>
+<style>
+  :root {
+    --bg-main: #f0f4f1; --card-bg: #eaf0eb; --white: #ffffff;
+    --text-dark: #1a2b22; --text-sub: #637668; --primary-dark: #1b4231;
+    --primary-light: #d8e5db; --accent-green: #22a06b; --accent-orange: #f5a623;
+    --border-color: #d1ded5; --chat-user: #dcf8c6;
+    --btn-history-bg: #1b4231; --btn-reports-bg: #4a7c59; --btn-recipes-bg: #82a38d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #e5e5e5; background-image: radial-gradient(#d4d4d4 1px, transparent 0); background-size: 20px 20px; padding: 20px; overflow-x: hidden; }
+  
+  .app-container { width: 100%; max-width: 414px; height: 100vh; height: 100dvh; max-height: 850px; background-color: var(--bg-main); border: 12px solid #fff; border-radius: 45px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.15); display: flex; flex-direction: column; position: relative; }
+  .scroll-content { flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 90px; display: flex; flex-direction: column; gap: 16px; }
+  .hidden { display: none !important; }
+  button, select, .interactive { cursor: pointer; transition: all 0.15s ease; outline: none; }
+  button:hover, .interactive:hover { filter: brightness(0.95); }
+  button:active, .interactive:active { transform: scale(0.97); }
+  
+  /* Fixed height & min-widths prevent top bar jump when status toggles */
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px; height: 36px; min-height: 36px; }
+  .brand { font-size: 20px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; }
+  .brand i { font-style: italic; color: var(--primary-dark); }
+  .badge-pill { background: var(--primary-light); color: var(--text-sub); font-size: 8px; font-weight: 700; padding: 4px 6px; border-radius: 12px; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; flex-shrink: 0; }
+  .status-pill { background: #f8d7da; color: #721c24; font-size: 11px; font-weight: 600; padding: 6px 10px; border-radius: 16px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #f5c6cb; user-select: none; flex-shrink: 0; white-space: nowrap; min-width: 110px; }
+  .status-dot { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; flex-shrink: 0; }
+  .status-dot.disconnected { background-color: #dc3545; }
+  
+  .user-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .user-info-wrapper { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 44px; height: 44px; background: var(--primary-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; flex-shrink: 0; }
+  .user-text h1 { font-size: 22px; color: var(--text-dark); font-weight: 700; }
+  
+  .card { background: var(--card-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); }
+  .card-white { background: var(--white); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .ai-badge { background: var(--primary-light); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; color: var(--text-dark); text-transform: uppercase; white-space: nowrap; }
+  
+  .chat-history { background: var(--white); border-radius: 16px; padding: 12px; height: 210px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); scroll-behavior: smooth; }
+  .chat-msg { max-width: 88%; padding: 10px 14px; font-size: 13px; line-height: 1.4; word-break: break-word; }
+  .msg-ai { background: var(--bg-main); color: var(--text-dark); border-radius: 14px 14px 14px 4px; align-self: flex-start; }
+  .msg-user { background: var(--chat-user); color: var(--text-dark); border-radius: 14px 14px 4px 14px; align-self: flex-end; }
+  
+  .input-group { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+  .input-group input { flex: 1; border: none; padding: 12px 16px; border-radius: 14px; font-size: 14px; background: var(--white); outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset; min-width: 0; }
+  .btn-icon { width: 42px; height: 42px; border: none; border-radius: 12px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+  .btn-plus { background: var(--primary-light); color: var(--text-dark); font-size: 20px; }
+  .btn-submit { background: var(--primary-dark); color: var(--white); }
+  
+  .action-buttons { display: flex; gap: 8px; }
+  .action-buttons button { flex: 1; padding: 10px 4px; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn-history-nav { background: var(--btn-history-bg); }
+  .btn-reports-nav { background: var(--btn-reports-bg); }
+  .btn-recipes-nav { background: var(--btn-recipes-bg); }
+  
+  .empty-state-card { background: var(--white); border-radius: 20px; padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; border: 1px solid var(--border-color); min-height: 300px; }
+  .empty-state-title { font-size: 20px; font-weight: 700; color: var(--text-dark); }
+  .empty-state-text { font-size: 14px; color: var(--text-sub); line-height: 1.4; }
+  .btn-back { background: var(--primary-dark); color: var(--white); border: none; padding: 10px 20px; border-radius: 14px; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 6px; flex-shrink: 0; }
+  
+  .history-list-container { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 16px; }
+  .history-item-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-color); }
+  .history-item-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .history-item-title { font-size: 15px; font-weight: 700; color: var(--text-dark); word-break: break-word; line-height: 1.3; }
+  .history-item-date { font-size: 12px; color: var(--text-sub); font-family: monospace; font-weight: 600; text-align: right; flex-shrink: 0; }
+  .history-item-form { font-size: 12px; background: var(--white); padding: 6px 12px; border-radius: 8px; color: var(--primary-dark); font-weight: 600; display: inline-block; align-self: flex-start; line-height: 1.3; }
+  
+  .recipe-list { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 16px; }
+  .recipe-card { background: var(--white); border-radius: 12px; border: 1px solid var(--border-color); overflow: hidden; }
+  .recipe-header { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; transition: background 0.2s; gap: 8px; }
+  .recipe-header:hover { background: #f8faf9; }
+  .recipe-info { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+  .recipe-title { font-weight: 700; color: var(--text-dark); font-size: 14px; display: flex; align-items: flex-start; gap: 6px; word-break: break-word; line-height: 1.3; }
+  .recipe-purpose { font-size: 12px; color: var(--text-sub); line-height: 1.3; }
+  .recipe-header svg { flex-shrink: 0; }
+  .recipe-ingredients { padding: 0 16px 14px 16px; font-size: 12px; color: var(--primary-dark); font-weight: 600; display: none; border-top: 1px dashed var(--border-color); margin-top: 8px; padding-top: 12px; }
+  .recipe-card.open .recipe-ingredients { display: block; }
+  .recipe-card.open .recipe-header { background: #f8faf9; }
+  
+  .section-title { font-size: 12px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .formulation-select-wrapper { display: flex; gap: 10px; margin-bottom: 16px; align-items: stretch; }
+  .custom-select { flex: 1; background: var(--white); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 16px; position: relative; min-width: 0; }
+  .custom-select select { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .select-content { display: flex; justify-content: space-between; align-items: center; pointer-events: none; gap: 8px; }
+  .select-text { min-width: 0; }
+  .select-text h4 { font-size: 15px; color: var(--text-dark); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .select-text p { font-size: 11px; color: var(--text-sub); font-family: monospace; }
+  .select-arrow { background: var(--bg-main); width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+  .btn-pencil { width: 55px; background: #b5ccb8; border: none; border-radius: 16px; display: flex; justify-content: center; align-items: center; color: var(--primary-dark); flex-shrink: 0; }
+  
+  .dispense-actions { display: flex; gap: 12px; }
+  .dispense-btn { flex: 1; padding: 12px 8px; border-radius: 16px; border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+  .dispense-btn span.title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .dispense-btn span.sub { font-size: 11px; opacity: 0.8; line-height: 1.2; }
+  .btn-drink { background: var(--primary-dark); color: var(--white); }
+  .btn-pouch { background: #abc9b2; color: var(--primary-dark); }
+  
+  .machine-status-card { background: var(--white); border-radius: 16px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); gap: 10px; }
+  .machine-status-item { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .machine-status-item:last-child { align-items: flex-end; text-align: right; }
+  .machine-status-label { font-size: 11px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+  .machine-status-value { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+  
+  .btn-flush { width: 100%; padding: 14px; border-radius: 16px; font-size: 15px; font-weight: 600; border: none; color: var(--white); background: var(--accent-orange); margin-top: 12px; margin-bottom: 6px; display: flex; justify-content: center; align-items: center; }
+  .btn-update-ingredients { width: 100%; padding: 12px; border-radius: 16px; font-size: 14px; font-weight: 600; border: none; color: var(--white); background: var(--primary-dark); margin-top: 12px; display: flex; justify-content: center; align-items: center; }
+  
+  .toggle-row { display: flex; justify-content: space-between; align-items: center; background: var(--white); border-radius: 16px; padding: 12px 16px; border: 1px solid var(--border-color); margin-top: 8px; margin-bottom: 12px; gap: 12px; }
+  .toggle-label { font-size: 13px; font-weight: 700; color: var(--text-dark); display: flex; flex-direction: column; line-height: 1.3; }
+  .toggle-sub { font-size: 11px; color: var(--text-sub); font-weight: 500; margin-top: 2px; }
+  .switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 24px; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+  input:checked + .slider { background-color: var(--accent-green); }
+  input:checked + .slider:before { transform: translateX(20px); }
+  
+  .hopper-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .hopper-grid { background: var(--white); border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; }
+  .hop-item { display: flex; flex-direction: column; gap: 6px; }
+  .hop-label { font-size: 12px; font-weight: 600; color: var(--text-dark); line-height: 1.2; }
+  .hop-label span { color: var(--text-sub); font-weight: 500; font-size: 11px; }
+  .hop-bar-row { display: flex; align-items: center; gap: 8px; }
+  .progress-bg { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s ease; }
+  .fill-green { background: var(--accent-green); }
+  .fill-orange { background: var(--accent-orange); }
+  .hop-pct { font-size: 10px; font-weight: 600; color: var(--text-sub); width: 28px; text-align: right; flex-shrink: 0; }
+  
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .stat-box { background: var(--white); padding: 12px; border-radius: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { font-size: 10px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; white-space: nowrap; }
+  .stat-value { font-size: 13px; font-weight: 600; font-family: monospace; color: var(--primary-dark); word-break: break-word; }
+  .logs-box { grid-column: span 2; background: var(--text-dark); color: #00ff00; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 11px; height: 120px; overflow-y: auto; line-height: 1.4; }
+  
+  .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--white); display: flex; padding: 12px 10px 24px 10px; border-top: 1px solid var(--border-color); z-index: 10; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-sub); background: none; border: none; font-size: 12px; font-weight: 600; }
+  .nav-item.active { color: var(--primary-dark); }
+  .nav-item svg { fill: currentColor; width: 24px; height: 24px; flex-shrink: 0; }
+  
+  .modal-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; backdrop-filter: blur(2px); }
+  .modal-card { background: var(--white); width: 100%; max-width: 340px; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+  .modal-card h3 { font-size: 18px; color: var(--text-dark); font-weight: 700; }
+  .modal-card select, .modal-card input { padding: 12px; border-radius: 12px; border: 1px solid var(--border-color); outline: none; font-size: 14px; width: 100%; background: var(--bg-main); color: var(--text-dark); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; flex-wrap: wrap; }
+  .btn-modal { padding: 10px 16px; border-radius: 12px; border: none; font-weight: 600; font-size: 13px; flex: 1; display: flex; justify-content: center; align-items: center; text-align: center; line-height: 1.3; }
+  .btn-modal-cancel { background: var(--bg-main); color: var(--text-dark); }
+  .btn-modal-save { background: var(--primary-dark); color: var(--white); }
+  
+  .prep-header { text-align: center; margin-bottom: 12px; }
+  .prep-header h2 { font-size: 22px; color: var(--text-dark); font-weight: 800; margin-bottom: 6px; line-height: 1.2; }
+  .prep-header p { font-size: 13px; color: var(--text-sub); line-height: 1.4; padding: 0 10px; }
+  
+  .prep-main-card { background: var(--white); border-radius: 20px; padding: 20px 16px; border: 1px solid var(--border-color); display: flex; gap: 16px; align-items: center; }
+  .ring-box { position: relative; width: 110px; height: 110px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+  .ring-box svg { transform: rotate(-90deg); width: 110px; height: 110px; }
+  .ring-bg { fill: none; stroke: var(--primary-light); stroke-width: 9; }
+  .ring-fill { fill: none; stroke: var(--primary-dark); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 0.3s ease; }
+  .ring-text { position: absolute; font-size: 22px; font-weight: 800; color: var(--text-dark); }
+  
+  .prep-steps { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+  .step-item { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--text-sub); transition: color 0.2s ease; }
+  .step-item span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+  .step-item.active { color: var(--text-dark); font-weight: 700; }
+  .step-item.done { color: var(--primary-dark); }
+  .step-icon { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border-color); background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; transition: all 0.2s ease; }
+  .step-item.done .step-icon { background: var(--primary-dark); border-color: var(--primary-dark); color: var(--white); }
+  .step-item.active .step-icon { background: var(--accent-green); border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(34, 160, 107, 0.25); color: var(--white); }
+  
+  .prep-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .prep-meta-box { background: var(--white); padding: 12px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; overflow: hidden; }
+  .prep-meta-icon { width: 32px; height: 32px; background: var(--bg-main); border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--primary-dark); flex-shrink: 0; font-size: 16px; }
+  .prep-meta-text { display: flex; flex-direction: column; min-width: 0; }
+  .prep-meta-label { font-size: 10px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+  .prep-meta-val { font-size: 13px; font-weight: 700; color: var(--text-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  
+  .eta-banner { background: #e1ede3; border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid #c8dccb; }
+  .eta-icon { color: var(--primary-dark); display: flex; align-items: center; font-size: 20px; flex-shrink: 0; }
+  .eta-text { min-width: 0; }
+  .eta-text h5 { font-size: 11px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .eta-text p { font-size: 16px; font-weight: 800; color: var(--primary-dark); }
+  .motto-footer { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-sub); text-transform: uppercase; margin-top: 8px; margin-bottom: 8px; }
+
+  /* ================== MOBILE RESPONSIVE MEDIA QUERIES ================== */
+  @media (max-width: 480px) {
+    body { padding: 0; background-color: var(--bg-main); background-image: none; }
+    .app-container { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border: none; border-radius: 0; box-shadow: none; }
+    .scroll-content { padding: 16px; padding-bottom: 90px; }
+    .action-buttons button { padding: 10px 4px; font-size: 12px; }
+    .hopper-grid { gap: 12px; grid-template-columns: 1fr 1fr; }
+    .prep-main-card { flex-direction: column; text-align: left; }
+    .ring-box { margin-bottom: 8px; }
+    .prep-steps { width: 100%; align-items: flex-start; padding-left: 10px; }
+    .btn-flush { margin-top: 8px; margin-bottom: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="scroll-content">
+    <div class="top-bar">
+      <div class="brand"><i>i</i>Yurva <span class="badge-pill">POWERED BY VEDIC AI</span></div>
+      <div class="status-pill interactive" id="statusBtn" onclick="toggleStatus()">
+        <div class="status-dot disconnected" id="statusDot"></div> <span id="statusText">Disconnected</span>
+      </div>
+    </div>
+
+    <div class="user-row">
+      <div class="user-info-wrapper">
+        <div class="avatar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.4 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/>
+            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
+          </svg>
+        </div>
+        <div class="user-text"><h1>Hello Boss!</h1></div>
+      </div>
+    </div>
+
+    <div id="tab-vedic">
+      <div class="card">
+        <div class="card-header">
+          <div class="ai-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg> VEDIC AI</div>
+        </div>
+        
+        <div class="chat-history" id="chatBox">
+          <div class="chat-msg msg-ai">Namaste! Tell me how you're feeling, or describe your symptoms. I'm here to help.</div>
+        </div>
+        
+        <div class="input-group">
+          <button class="btn-icon btn-plus" onclick="triggerUpload()" title="Upload PDF/Report">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <input type="file" id="fileUpload" style="display:none;" accept="application/pdf" onchange="handleFileUpload(event)" />
+          <input type="text" id="chatInput" placeholder="Describe symptoms or paste example..." onkeypress="handleEnter(event)" />
+          <button class="btn-icon btn-submit" onclick="sendMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-history-nav" onclick="openSubPage('History')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> History</button>
+          <button class="btn-reports-nav" onclick="openSubPage('Reports')">Reports</button>
+          <button class="btn-recipes-nav" onclick="openSubPage('Recipes')">Recipes</button>
+        </div>
+      </div>
+
+      <div class="card card-white" style="margin-top: 16px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+          <div class="section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> SELECT FORMULATION</div>
+        </div>
+
+        <div class="formulation-select-wrapper">
+          <div class="custom-select interactive">
+            <select id="formulationSelect" name="formulation" onchange="updateFormulationUI(this.value)"></select>
+            <div class="select-content">
+              <div class="select-text">
+                <h4 id="selTitle">Respi-Clear</h4>
+                <p id="selDesc">CODE: k1</p>
+              </div>
+              <div class="select-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+            </div>
+          </div>
+          <button class="btn-pencil interactive" title="Customize" onclick="alert('Customize Formulation Options')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>
+        </div>
+
+        <div class="dispense-actions">
+          <button class="dispense-btn btn-drink" onclick="dispenseAction('Drink')"><span class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 10H7v8a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-8z"></path><line x1="9" y1="10" x2="9" y2="6"></line><line x1="15" y1="10" x2="15" y2="6"></line><path d="M12 6V2"></path></svg> Drink</span><span class="sub">Dispense into cup</span></button>
+          <button class="dispense-btn btn-pouch" onclick="dispenseAction('Pouch')"><span class="title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Pouch</span><span class="sub">Sealed travel pack</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dispensing Overlay -->
+    <div id="tab-dispensing" class="hidden">
+      <div class="prep-header"><h2 id="prepTitle">Preparing...</h2><p id="prepSub">Extracting goodness from natural herbs...</p></div>
+      <div class="prep-main-card">
+        <div class="ring-box"><svg viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="45"></circle><circle class="ring-fill" id="ringFill" cx="50" cy="50" r="45"></circle></svg><span class="ring-text" id="ringPct">0%</span></div>
+        <div class="prep-steps">
+          <div class="step-item" id="step-1"><div class="step-icon">✓</div><span id="step-text-1">Dispensing ingredients</span></div>
+          <div class="step-item" id="step-2"><div class="step-icon">✓</div><span id="step-text-2">Grinding & blending</span></div>
+          <div class="step-item" id="step-3"><div class="step-icon">✓</div><span id="step-text-3">Brewing in progress</span></div>
+          <div class="step-item" id="step-4"><div class="step-icon">✓</div><span id="step-text-4">Herbal filtration</span></div>
+          <div class="step-item" id="step-5"><div class="step-icon">✓</div><span id="step-text-5">Dispensing formulation</span></div>
+        </div>
+      </div>
+      <div class="card card-white" style="margin-top: 12px; padding: 12px;" id="dispenseDetailsCard">
+        <div class="section-title" style="margin-bottom: 8px;">DISPENSING INGREDIENTS</div>
+        <div id="dispenseIngredientList" style="font-size: 12px; color: var(--text-dark); font-weight: 600; display: flex; flex-direction: column; gap: 4px; line-height: 1.3;"></div>
+      </div>
+      <div class="prep-meta-grid" style="margin-top: 12px;">
+        <div class="prep-meta-box"><div class="prep-meta-icon">☕</div><div class="prep-meta-text"><span class="prep-meta-label">Output</span><span class="prep-meta-val" id="dispOutputVal">Hot Brew</span></div></div>
+        <div class="prep-meta-box"><div class="prep-meta-icon">🧪</div><div class="prep-meta-text"><span class="prep-meta-label">Amount</span><span class="prep-meta-val" id="dispServingVal">-</span></div></div>
+      </div>
+      <div class="eta-banner" style="margin-top: 12px;"><div class="eta-icon">⏱</div><div class="eta-text"><h5>Estimated time remaining</h5><p id="etaCountdown">45 seconds</p></div></div>
+      <button class="btn-back interactive hidden" id="prepDoneBtn" style="width:100%; justify-content:center; padding: 14px; margin-top: 12px;" onclick="finishDispensing()">Done • Return to Vedic AI</button>
+      <div class="motto-footer">Brew. Heal. Repeat.</div>
+    </div>
+
+    <!-- Subpage View -->
+    <div id="tab-subpage" class="hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-dark);" id="subPageTitle">History</h2>
+        <button class="btn-back interactive" style="padding: 8px 14px;" onclick="closeSubPage()">Back</button>
+      </div>
+      <div id="subPageContent">
+        <div class="empty-state-card" id="emptyStatePlaceholder"><div class="empty-state-title" id="emptyStateTitle">No Records Yet</div><div class="empty-state-text" id="emptyStateText" style="margin-top: 4px;">Items will appear here once processed.</div></div>
+        <div class="history-list-container hidden" id="historyListContainer"></div>
+        <div class="history-list-container hidden" id="reportsListContainer"></div>
+        <div class="recipe-list hidden" id="recipesListContainer"></div>
+      </div>
+    </div>
+
+    <div id="tab-machine" class="hidden">
+      <div class="machine-status-card">
+        <div class="machine-status-item"><span class="machine-status-label">Machine Temp</span><span class="machine-status-value" id="machineTempVal">87°C</span></div>
+        <div style="height: 32px; width: 1px; background: var(--border-color);"></div>
+        <div class="machine-status-item"><span class="machine-status-label">Machine Status</span><span class="machine-status-value" style="color: var(--accent-green);">Ready</span></div>
+      </div>
+      <button class="btn-flush interactive" onclick="triggerBoilerFlush()">Boiler Flush</button>
+      
+      <!-- Auto Flush Toggle -->
+      <div class="toggle-row">
+        <div class="toggle-label">
+          <span>Automatic Flush Cycles</span>
+          <span class="toggle-sub">Auto boiler flush after direct drink dispensing</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="autoFlushToggle" onchange="toggleAutoFlush(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="hopper-header"><div class="section-title"><div class="status-dot"></div> HOPPER ARRAY STATUS</div><div class="badge-pill" style="background: var(--white); border: 1px solid var(--border-color); color: var(--text-dark); text-transform: none;">12 / 12 Active</div></div>
+        <div class="hopper-grid">
+          <div class="hop-item"><div class="hop-label">1. <span id="slot-1">Tulsi</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 85%;"></div></div><div class="hop-pct">85%</div></div></div>
+          <div class="hop-item"><div class="hop-label">7. <span id="slot-7">Mulethi</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 95%;"></div></div><div class="hop-pct">95%</div></div></div>
+          <div class="hop-item"><div class="hop-label">2. <span id="slot-2">Dry Ginger</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 72%;"></div></div><div class="hop-pct">72%</div></div></div>
+          <div class="hop-item"><div class="hop-label">8. <span id="slot-8">Giloy</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 80%;"></div></div><div class="hop-pct">80%</div></div></div>
+          <div class="hop-item"><div class="hop-label">3. <span id="slot-3">Black Pepper</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 40%;"></div></div><div class="hop-pct">40%</div></div></div>
+          <div class="hop-item"><div class="hop-label">9. <span id="slot-9">Ajwain</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 35%;"></div></div><div class="hop-pct">35%</div></div></div>
+          <div class="hop-item"><div class="hop-label">4. <span id="slot-4">Cinnamon</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 90%;"></div></div><div class="hop-pct">90%</div></div></div>
+          <div class="hop-item"><div class="hop-label">10. <span id="slot-10">Ashwagandha</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 60%;"></div></div><div class="hop-pct">60%</div></div></div>
+          <div class="hop-item"><div class="hop-label">5. <span id="slot-5">Clove</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 65%;"></div></div><div class="hop-pct">65%</div></div></div>
+          <div class="hop-item"><div class="hop-label">11. <span id="slot-11">Cardamom</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 88%;"></div></div><div class="hop-pct">88%</div></div></div>
+          <div class="hop-item"><div class="hop-label">6. <span id="slot-6">Turmeric</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 75%;"></div></div><div class="hop-pct">75%</div></div></div>
+          <div class="hop-item"><div class="hop-label">12. <span id="slot-12">Fennel Seeds</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 82%;"></div></div><div class="hop-pct">82%</div></div></div>
+        </div>
+        <button class="btn-update-ingredients interactive" onclick="openIngredientModal()">Update Ingredients</button>
+      </div>
+      <div class="card">
+        <div class="section-title">STATS FOR NERDS (LOGS)</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">Device ID</div><div class="stat-value" id="statDeviceId">Offline</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Bits</div><div class="stat-value" id="statComBits">0 bits</div></div>
+          <div class="stat-box"><div class="stat-label">Last Flush</div><div class="stat-value" id="statLastFlush">Never</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Delay</div><div class="stat-value" id="statComDelay">2ms</div></div>
+          <div class="logs-box" id="logsBox">> system init... OK<br>> boiler_temp: 94C<br>> awaiting command...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-vedic" onclick="switchTab('vedic')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Vedic AI
+    </button>
+    <button class="nav-item" id="nav-machine" onclick="switchTab('machine')">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/></svg>
+      Machine
+    </button>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay hidden" id="ingredientModal">
+    <div class="modal-card">
+      <h3>Update Slot Ingredient</h3>
+      <select id="modalSlotSelect">
+        <option value="1">Slot 1</option><option value="2">Slot 2</option><option value="3">Slot 3</option>
+        <option value="4">Slot 4</option><option value="5">Slot 5</option><option value="6">Slot 6</option>
+        <option value="7">Slot 7</option><option value="8">Slot 8</option><option value="9">Slot 9</option>
+        <option value="10">Slot 10</option><option value="11">Slot 11</option><option value="12">Slot 12</option>
+      </select>
+      <input type="text" id="modalIngredientInput" placeholder="e.g. Cinnamon" />
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="closeIngredientModal()">Cancel</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="saveIngredientUpdate()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="quantityModal">
+    <div class="modal-card">
+      <h3 id="qtyModalTitle">Select Quantity</h3>
+      <select id="qtySelect"></select>
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="closeQuantityModal()">Cancel</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="confirmDispense()">Start Dispense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allergy Initial Check Modal -->
+  <div class="modal-overlay hidden" id="allergyModal">
+    <div class="modal-card">
+      <h3>Allergy Check</h3>
+      <p style="font-size: 13px; color: var(--text-dark); line-height: 1.4;" id="allergyIngredientsList"></p>
+      <p style="font-size: 13px; font-weight: 600; color: var(--primary-dark); margin-top: 6px;">Are you allergic to any of them?</p>
+      <div class="modal-actions" style="justify-content: space-between; margin-top: 12px;">
+        <button class="btn-modal interactive" onclick="handleAllergyYes()" style="background: #dc3545; color: white;">Yes</button>
+        <button class="btn-modal interactive" onclick="handleAllergyNo()" style="background: var(--accent-green); color: white;">No</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allergen Selection Modal -->
+  <div class="modal-overlay hidden" id="allergenSelectModal">
+    <div class="modal-card">
+      <h3>Select Allergens</h3>
+      <p style="font-size: 13px; color: var(--text-dark); line-height: 1.4;">Which of the following ingredients are you allergic to?</p>
+      <div id="allergenCheckboxContainer" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--text-dark);"></div>
+      <div class="modal-actions" style="justify-content: space-between; margin-top: 12px;">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="cancelAllergyCheck()">Go Back</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="confirmAllergenSelection()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Allergen Exclusion Confirmation Modal -->
+  <div class="modal-overlay hidden" id="allergenConfirmModal">
+    <div class="modal-card">
+      <h3>Confirm Exclusion</h3>
+      <p style="font-size: 13px; color: var(--text-dark); line-height: 1.4;" id="allergenConfirmText"></p>
+      <div class="modal-actions" style="justify-content: space-between; margin-top: 12px;">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="cancelAllergyCheck()">No, Go Back</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="proceedWithoutAllergens()">Proceed Without Them</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ================= KADHA DATABASE =================
+  const kadhaDB = [
+    { 
+      id: "k1", name: "Respi-Clear", purpose: "Decongestant & Cold Relief", 
+      recipe: [{name: "Tulsi", pct: 37.5}, {name: "Dry Ginger", pct: 25.0}, {name: "Black Pepper", pct: 20.0}, {name: "Clove", pct: 17.5}],
+      phrases: ["i have a blocked nose, chest congestion, and a cold", "blocked nose", "chest congestion", "cold", "chest heaviness", "runny nose", "mucus buildup", "nasal blockage", "stuffy nose", "can't breathe through my nose", "nose is completely blocked", "heavy chest feeling", "runny nose won't stop", "head cold", "nasal drip", "sniffles", "respiratory block", "clogged up nose", "mucus in chest", "phlegm", "winter cold"] 
+    },
+    { 
+      id: "k2", name: "Throat-Soothe", purpose: "Sore Throat & Vocal Strain", 
+      recipe: [{name: "Mulethi", pct: 45.0}, {name: "Clove", pct: 20.0}, {name: "Turmeric", pct: 20.0}, {name: "Black Pepper", pct: 15.0}],
+      phrases: ["my throat hurts when i swallow and my voice is raspy", "throat hurts when i swallow", "voice is raspy", "scratchy throat", "painful swallowing", "raspy voice", "throat pain", "raw throat", "throat feels like sandpaper", "hurts to swallow food", "throat irritation", "vocal cord pain", "inflamed throat", "sore tonsils", "swallowing hurts terribly", "dry throat tickle", "throat is burning when swallowing"] 
+    },
+    { 
+      id: "k3", name: "Immuno-Shield", purpose: "Everyday Immunity & Defense", 
+      recipe: [{name: "Giloy", pct: 37.5}, {name: "Tulsi", pct: 25.0}, {name: "Turmeric", pct: 20.0}, {name: "Dry Ginger", pct: 10.0}, {name: "Black Pepper", pct: 7.5}],
+      phrases: ["i feel like i'm falling sick / i want to boost my immunity", "falling sick", "boost my immunity", "low immunity", "frequent seasonal sickness", "fatigue", "stay healthy", "catch cold easily", "weak defense", "getting sick constantly", "need to build resistance", "preventative care", "prone to infection", "weak immune system", "daily health shield", "want to protect myself from illness", "keep getting sick"] 
+    },
+    { 
+      id: "k4", name: "Jwar-Har", purpose: "Fever & Body Soreness Care", 
+      recipe: [{name: "Giloy", pct: 45.0}, {name: "Tulsi", pct: 25.0}, {name: "Dry Ginger", pct: 17.5}, {name: "Black Pepper", pct: 12.5}],
+      phrases: ["i have a fever and my whole body aches", "fever and my whole body aches", "mild fever", "body aches", "shivering", "temperature spike", "running a high temperature", "feeling feverish and sore", "chills and body pain", "flu like symptoms", "bones are aching", "hot forehead", "sweats and chills", "body feels broken from fever", "viral fever feeling", "whole body hurts", "shivering with cold"] 
+    },
+    { 
+      id: "k5", name: "Pachan-Agni", purpose: "Digestion & Appetite Boost", 
+      recipe: [{name: "Ajwain", pct: 37.5}, {name: "Fennel", pct: 30.0}, {name: "Dry Ginger", pct: 20.0}, {name: "Black Pepper", pct: 12.5}],
+      phrases: ["i feel stuffed, heavy, and have no appetite", "feel stuffed, heavy, and have no appetite", "loss of appetite", "heaviness after eating", "sluggish gut", "no appetite", "don't feel like eating anything", "stomach feels incredibly full", "food is just sitting in my stomach", "digestive lag", "slow digestion", "no hunger at all", "stomach feels sluggish", "heavy feeling in belly", "poor digestion"] 
+    },
+    { 
+      id: "k6", name: "Gastri-Calm", purpose: "Anti-Bloat & Gas Relief", 
+      recipe: [{name: "Ajwain", pct: 37.5}, {name: "Fennel", pct: 32.5}, {name: "Cardamom", pct: 17.5}, {name: "Dry Ginger", pct: 12.5}],
+      phrases: ["my stomach is bloated and i have painful gas", "stomach is bloated and i have painful gas", "trapped stomach gas", "abdominal cramps", "bloating", "painful gas", "loose motion", "diarrhea", "belly feels like a balloon", "gas cramps", "upset stomach", "frequent trips to the washroom", "stomach bug", "cramping belly", "stomach infection", "watery stool", "rumbling stomach", "passing a lot of gas", "stomach griping"] 
+    },
+    { 
+      id: "k7", name: "Amla-Pittahar", purpose: "Acidity & Heartburn Chill", 
+      recipe: [{name: "Fennel", pct: 45.0}, {name: "Mulethi", pct: 30.0}, {name: "Cardamom", pct: 25.0}],
+      phrases: ["i have heartburn and a burning feeling in my stomach", "heartburn and a burning feeling in my stomach", "burning in chest", "acid reflux", "sour belching", "acidity", "sour stomach", "chest is on fire", "acid coming up my throat", "sour burps", "hyperacidity", "stomach acid flare", "burning food pipe", "gerd symptoms", "pitta flare up", "stomach feels hot and acidic", "acid regurgitation"] 
+    },
+    { 
+      id: "k8", name: "Nidra-Ananda", purpose: "Sleep Support & Relaxation", 
+      recipe: [{name: "Ashwagandha", pct: 50.0}, {name: "Cardamom", pct: 25.0}, {name: "Fennel", pct: 15.0}, {name: "Mulethi", pct: 10.0}],
+      phrases: ["i can't sleep and my mind won't stop racing", "can't sleep and my mind won't stop racing", "insomnia", "restlessness", "racing thoughts at night", "trouble sleeping", "tossing and turning all night", "unable to fall asleep", "waking up constantly", "nighttime anxiety", "poor sleep quality", "mind is too active at bedtime", "need sleep support", "restless sleep", "can't shut my brain off"] 
+    },
+    { 
+      id: "k9", name: "Tension-Relief", purpose: "Stress & Mental Fatigue", 
+      recipe: [{name: "Ashwagandha", pct: 45.0}, {name: "Tulsi", pct: 25.0}, {name: "Cardamom", pct: 17.5}, {name: "Cinnamon", pct: 12.5}],
+      phrases: ["i feel stressed out, burnt out, and anxious", "stressed out, burnt out, and anxious", "high mental stress", "burnout", "nervous tension", "mental fatigue", "brain fog", "overwhelmed with work", "feeling very anxious", "nervous pressure", "mental strain", "mind is exhausted", "stress overload", "tense and worried", "emotional exhaustion", "need to relax my mind", "anxiety"] 
+    },
+    { 
+      id: "k10", name: "Sandhi-Ease", purpose: "Joint & Muscle Soreness", 
+      recipe: [{name: "Turmeric", pct: 37.5}, {name: "Dry Ginger", pct: 30.0}, {name: "Cinnamon", pct: 20.0}, {name: "Black Pepper", pct: 12.5}],
+      phrases: ["my joints are stiff and sore/my muscles hurt", "joints are stiff and sore", "my muscles hurt", "stiff joints", "muscle pain", "post-exercise soreness", "joint soreness", "knees are aching", "back stiffness", "body is stiff all over", "sore from the gym", "rheumatic pain", "muscle tightness", "limbs feel stiff", "post workout pain", "inflammation in joints"] 
+    },
+    { 
+      id: "k11", name: "Urja-Vitality", purpose: "Morning Energy Booster", 
+      recipe: [{name: "Ashwagandha", pct: 37.5}, {name: "Cinnamon", pct: 25.0}, {name: "Dry Ginger", pct: 20.0}, {name: "Cardamom", pct: 17.5}],
+      phrases: ["i feel completely drained of energy today", "completely drained of energy today", "waking fatigue", "low energy", "physical weakness", "loss of energy", "zero stamina", "feeling sluggish in the morning", "morning slump", "exhausted body", "tired limbs", "feeling completely wiped out", "no power", "daytime lethargy", "need an energy boost", "depleted of energy"] 
+    },
+    { 
+      id: "k12", name: "Stri-Mitra", purpose: "Menstrual Cramp Relief", 
+      recipe: [{name: "Ajwain", pct: 37.5}, {name: "Fennel", pct: 25.0}, {name: "Cinnamon", pct: 20.0}, {name: "Dry Ginger", pct: 17.5}],
+      phrases: ["i have severe period cramps and lower back pain", "severe period cramps and lower back pain", "period pain", "lower back aches", "pelvic tightness", "dysmenorrhea", "monthly cycle pain", "pms cramps", "uterine cramps", "cramping lower abdomen", "menstrual discomfort", "painful period", "period backache", "severe pelvic pain"] 
+    },
+    { 
+      id: "k13", name: "Metabo-Burn", purpose: "Metabolism & Fluid Balance", 
+      recipe: [{name: "Cinnamon", pct: 37.5}, {name: "Black Pepper", pct: 25.0}, {name: "Dry Ginger", pct: 20.0}, {name: "Turmeric", pct: 17.5}],
+      phrases: ["i feel sluggish, bloated with water, and want a metabolism boost", "feel sluggish, bloated with water, and want a metabolism boost", "sluggish metabolism", "fluid retention", "water weight", "metabolic boost", "retaining water", "heavy body weight", "slow metabolism", "water bloat", "feeling puffy", "need to burn fat", "fluid buildup in body"] 
+    },
+    { 
+      id: "k14", name: "Kapa-Cough", purpose: "Dry Cough Relief", 
+      recipe: [{name: "Mulethi", pct: 37.5}, {name: "Dry Ginger", pct: 25.0}, {name: "Black Pepper", pct: 15.0}, {name: "Tulsi", pct: 12.5}, {name: "Cardamom", pct: 10.0}],
+      phrases: ["i have a tickly dry cough that won't stop", "tickly dry cough that won't stop", "persistent dry coughing", "tickle in throat", "hacking cough", "dry cough", "unproductive cough", "throat tickle", "continuous coughing fits", "itchy throat causing cough", "dry raspy cough", "cough without mucus"] 
+    },
+    { 
+      id: "k15", name: "Skin-Glow", purpose: "Blood Detox & Clear Skin", 
+      recipe: [{name: "Giloy", pct: 37.5}, {name: "Turmeric", pct: 30.0}, {name: "Fennel", pct: 20.0}, {name: "Tulsi", pct: 12.5}],
+      phrases: ["i'm getting skin breakouts and feel internal heat", "getting skin breakouts and feel internal heat", "acne breakouts", "internal heat", "dull skin", "pimples", "blood detox", "skin rash", "face is breaking out", "blood impurity", "heat pimples", "need a skin detox", "dull complexion", "frequent breakouts"] 
+    },
+    { 
+      id: "k16", name: "Head-Clear", purpose: "Sinus & Headache Relief", 
+      recipe: [{name: "Black Pepper", pct: 30.0}, {name: "Dry Ginger", pct: 30.0}, {name: "Tulsi", pct: 25.0}, {name: "Clove", pct: 15.0}],
+      phrases: ["i have a heavy sinus headache and forehead pressure", "heavy sinus headache and forehead pressure", "sinus pressure", "throbbing forehead", "heavy head", "sinus headache", "temples are throbbing", "frontal headache", "pain behind the eyes", "head pressure", "congestion headache", "migraine feeling"] 
+    },
+    { 
+      id: "k17", name: "Shvasa-Pure", purpose: "Allergy & Dust Defense", 
+      recipe: [{name: "Tulsi", pct: 37.5}, {name: "Giloy", pct: 25.0}, {name: "Turmeric", pct: 20.0}, {name: "Black Pepper", pct: 17.5}],
+      phrases: ["i keep sneezing continuously and my eyes are watery", "keep sneezing continuously and my eyes are watery", "continuous sneezing", "watery eyes", "dust sensitivity", "allergy", "pollen allergy", "allergic rhinitis", "sneezing fits", "dust reaction", "itchy watery eyes", "morning sneezing"] 
+    },
+    { 
+      id: "k18", name: "Mukh-Fresh", purpose: "Oral & Gum Care", 
+      recipe: [{name: "Cardamom", pct: 30.0}, {name: "Fennel", pct: 30.0}, {name: "Clove", pct: 20.0}, {name: "Mulethi", pct: 20.0}],
+      phrases: ["my breath feels stale and my gums feel sensitive", "breath feels stale and my gums feel sensitive", "bad breath", "tender gums", "sticky throat sensation", "halitosis", "gum pain", "mouth feels unclean", "oral odor", "sensitive gums", "stale taste in mouth", "gum inflammation"] 
+    },
+    { 
+      id: "k19", name: "Sheetal-Cool", purpose: "Body Heat Reducer", 
+      recipe: [{name: "Fennel", pct: 50.0}, {name: "Cardamom", pct: 30.0}, {name: "Mulethi", pct: 20.0}],
+      phrases: ["i feel hot from the inside and excessively thirsty", "feel hot from the inside and excessively thirsty", "feeling overheated inside", "excessive thirst", "body heat", "heat flushes", "internal burning sensation", "extremely thirsty all the time", "cooling body down", "hot flashes", "internal body heat"] 
+    },
+    { 
+      id: "k20", name: "Post-Meal Sip", purpose: "Digestant Refresher", 
+      recipe: [{name: "Fennel", pct: 37.5}, {name: "Cardamom", pct: 25.0}, {name: "Dry Ginger", pct: 20.0}, {name: "Clove", pct: 17.5}],
+      phrases: ["i just had a heavy meal and want something to settle my stomach", "just had a heavy meal and want something to settle my stomach", "lingering food taste", "mild fullness after heavy meals", "heavy meal settle stomach", "post dinner fullness", "mouth refresher", "ate too much food", "settle stomach after eating"] 
+    },
+    { 
+      id: "k21", name: "Vata-Balancing", purpose: "Cold Extremities & Chill", 
+      recipe: [{name: "Ashwagandha", pct: 37.5}, {name: "Cinnamon", pct: 25.0}, {name: "Dry Ginger", pct: 20.0}, {name: "Ajwain", pct: 17.5}],
+      phrases: ["i feel freezing cold inside and my hands and feet are cold", "feel freezing cold inside and my hands and feet are cold", "cold hands and feet", "internal chills", "dry gut", "cold feet", "cold hands", "shivering cold inside", "icy extremities", "can't get warm", "feeling chilled to the bone"] 
+    },
+    { 
+      id: "k22", name: "Vocalist-Care", purpose: "Voice Loss & Larynx Support", 
+      recipe: [{name: "Mulethi", pct: 50.0}, {name: "Cardamom", pct: 20.0}, {name: "Clove", pct: 17.5}, {name: "Turmeric", pct: 12.5}],
+      phrases: ["i spoke a lot and lost my voice / strained my throat", "spoke a lot and lost my voice", "strained my throat", "strained vocal cords", "voice loss from speaking", "lost voice talking", "singer voice strain", "larynx strain", "hoarse from speaking too much", "vocal fatigue", "can't speak loud"] 
+    },
+    { 
+      id: "k23", name: "Chardi-Nivar", purpose: "Nausea & Travel Motion", 
+      recipe: [{name: "Dry Ginger", pct: 37.5}, {name: "Cardamom", pct: 30.0}, {name: "Fennel", pct: 20.0}, {name: "Clove", pct: 12.5}],
+      phrases: ["i feel nauseous and sick to my stomach", "feel nauseous and sick to my stomach", "queasiness", "desire to vomit", "motion sickness", "vomiting feeling", "car sickness", "sea sick", "want to throw up", "nausea", "feeling faint and sick", "travel sickness"] 
+    },
+    { 
+      id: "k24", name: "To-Tox Flush", purpose: "Post-Junk Food Recovery", 
+      recipe: [{name: "Giloy", pct: 30.0}, {name: "Turmeric", pct: 25.0}, {name: "Ajwain", pct: 20.0}, {name: "Black Pepper", pct: 12.5}, {name: "Dry Ginger", pct: 12.5}],
+      phrases: ["i ate too much greasy junk food and feel toxic", "ate too much greasy junk food and feel toxic", "hangover feeling", "heavy greasy feeling in stomach", "greasy junk food", "feel toxic", "post party recovery", "junk food overload", "need a detox flush", "oily food heavy stomach", "feeling groggy from bad food"] 
+    },
+    { 
+      id: "k25", name: "Chai-Rejuvenator", purpose: "All-Round Daily Tonic", 
+      recipe: [{name: "Dry Ginger", pct: 25.0}, {name: "Cardamom", pct: 20.0}, {name: "Cinnamon", pct: 20.0}, {name: "Black Pepper", pct: 12.5}, {name: "Clove", pct: 12.5}, {name: "Tulsi", pct: 10.0}],
+      phrases: ["i want a healthy, spice-infused, caffeine-free warm tea", "want a healthy, spice-infused, caffeine-free warm tea", "everyday tiredness", "caffeine-free warm boost", "healthy spice-infused tea", "general warm tea", "daily herbal tea", "tea substitute", "rejuvenating drink", "evening tea"] 
+    }
+  ];
+
+  window.onload = () => {
+    const sel = document.getElementById('formulationSelect');
+    sel.innerHTML = '';
+    kadhaDB.forEach(k => {
+      k.phrases.sort((a, b) => b.length - a.length);
+      sel.innerHTML += `<option value="${k.id}">${k.name}</option>`;
+    });
+    updateFormulationUI('k1');
+    renderRecipes();
+    initTempRandomizer();
+  };
+
+  let prepTimerInterval = null;
+  const historyDatabase = []; 
+  const reportsDatabase = []; 
+  
+  const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+  const CHAR_RX_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+  let bleDevice = null, bleServer = null, rxChar = null;
+
+  let discrepancyState = { active: false, optionA: null, optionB: null };
+  let autoFlushEnabled = false;
+
+  function getTimestamp() { return new Date().toTimeString().split(' ')[0]; }
+
+  function writeToLog(message) {
+    const logs = document.getElementById('logsBox');
+    if (logs) { logs.innerHTML += `<br>> [${getTimestamp()}] ${message}`; logs.scrollTop = logs.scrollHeight; }
+  }
+
+  function toggleAutoFlush(isON) {
+    autoFlushEnabled = isON;
+    writeToLog("Auto flush mode: " + (isON ? "ON" : "OFF"));
+  }
+
+  function initTempRandomizer() {
+    setInterval(() => {
+      let temp;
+      const rand = Math.random();
+      if (rand < 0.8) {
+        temp = Math.floor(Math.random() * 5) + 85;
+      } else {
+        const rareTemps = [80, 81, 82, 83, 84, 90];
+        temp = rareTemps[Math.floor(Math.random() * rareTemps.length)];
+      }
+      const tempElem = document.getElementById('machineTempVal');
+      if (tempElem) tempElem.innerText = `${temp}°C`;
+    }, 4000);
+  }
+
+  async function toggleStatus() {
+    if (bleDevice && bleDevice.gatt.connected) { bleDevice.gatt.disconnect(); } 
+    else {
+      if (!navigator.bluetooth) { alert('Web Bluetooth is not supported in this browser.'); return; }
+      try {
+        writeToLog("Requesting BLE device...");
+        bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] });
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        writeToLog("Connecting GATT...");
+        bleServer = await bleDevice.gatt.connect();
+        const svc = await bleServer.getPrimaryService(SERVICE_UUID);
+        rxChar = await svc.getCharacteristic(CHAR_RX_UUID);
+
+        const dot = document.getElementById('statusDot');
+        const text = document.getElementById('statusText');
+        const btn = document.getElementById('statusBtn');
+        dot.classList.remove('disconnected');
+        text.innerText = 'Connected';
+        btn.style.background = '#e2f2e9';
+        btn.style.color = 'var(--primary-dark)';
+        btn.style.borderColor = '#cce5d6';
+
+        const devIdElem = document.getElementById('statDeviceId');
+        if (devIdElem) devIdElem.innerText = bleDevice.name || 'IYV-89X2';
+
+        writeToLog(`Connected: ${bleDevice.name}`);
+      } catch (error) { writeToLog(`Error: ${error.message}`); }
+    }
+  }
+
+  function onDisconnected() {
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const btn = document.getElementById('statusBtn');
+    dot.classList.add('disconnected');
+    text.innerText = 'Disconnected';
+    btn.style.background = '#f8d7da';
+    btn.style.color = '#721c24';
+    btn.style.borderColor = '#f5c6cb';
+    rxChar = null;
+    
+    const devIdElem = document.getElementById('statDeviceId');
+    if (devIdElem) devIdElem.innerText = 'Offline';
+    writeToLog("BLE Disconnected.");
+  }
+
+  async function sendBLECommand(cmd) {
+    const bitSize = new TextEncoder().encode(cmd).length * 8;
+    const bitsElem = document.getElementById('statComBits');
+    if (bitsElem) bitsElem.innerText = `${bitSize} bits`;
+
+    if (!rxChar) { writeToLog(`Skipped BLE TX (Offline): ${cmd}`); return; }
+    try {
+      const encoded = new TextEncoder().encode(cmd);
+      await rxChar.writeValueWithResponse(encoded);
+      writeToLog(`BLE TX: ${cmd}`);
+    } catch(e) { writeToLog(`BLE Error: ${e.message}`); }
+  }
+
+  function processAIInput(inputText, contextPrefix = "") {
+    const chatBox = document.getElementById('chatBox');
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'chat-msg msg-ai';
+    
+    let textLower = inputText.toLowerCase().replace(/[^\w\s/]/gi, ' ').replace(/\s+/g, ' ').trim();
+
+    if (discrepancyState.active) {
+      const optA = discrepancyState.optionA;
+      const optB = discrepancyState.optionB;
+      const t = textLower;
+
+      const negates = (text, opt) => {
+        return text.includes("not " + opt.name.toLowerCase()) || 
+               text.includes("no " + opt.name.toLowerCase()) ||
+               opt.phrases.some(p => text.includes("not " + p.split(' ')[0])) ||
+               opt.phrases.some(p => text.includes("not " + p));
+      };
+      
+      const chooses = (text, opt) => {
+        return text.includes(opt.name.toLowerCase()) || 
+               opt.phrases.some(p => text.includes(p));
+      };
+
+      let choseA = false;
+      let choseB = false;
+
+      if (t.includes("not the first") || t.includes("not " + optA.name.toLowerCase()) || t.includes("second") || t.includes("latter")) {
+        choseB = true;
+      } else if (t.includes("not the second") || t.includes("not " + optB.name.toLowerCase()) || t.includes("first") || t.includes("former")) {
+        choseA = true;
+      } else {
+        const negA = negates(t, optA);
+        const negB = negates(t, optB);
+        const affA = chooses(t, optA);
+        const affB = chooses(t, optB);
+
+        if (negA) choseB = true;
+        else if (negB) choseA = true;
+        else if (affA && !affB) choseA = true;
+        else if (affB && !affA) choseB = true;
+      }
+
+      if (choseA) {
+        aiDiv.textContent = `Got it. I recommend ${optA.name}.`;
+        selectFormulationValue(optA.id);
+        discrepancyState.active = false;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+      } else if (choseB) {
+        aiDiv.textContent = `Got it. I recommend ${optB.name}.`;
+        selectFormulationValue(optB.id);
+        discrepancyState.active = false;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+      } else if (t.includes("neither") || t.includes("none") || t.includes("cancel")) {
+        aiDiv.textContent = "Okay, let's start over. How are you feeling?";
+        discrepancyState.active = false;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+      } else {
+        aiDiv.textContent = `Just to be sure, are you leaning more toward the first option or the second? You can also say 'neither'.`;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        return;
+      }
+    }
+
+    const negatedTerms = [];
+    const negationRegex = /(?:not|no|don't have|isn't|without)\s+([a-z]+(?:\s+[a-z]+)?)/gi;
+    let match;
+    while ((match = negationRegex.exec(textLower)) !== null) { negatedTerms.push(match[1].trim()); }
+
+    let scores = kadhaDB.map(k => {
+      let score = 0;
+      k.phrases.forEach(phrase => {
+        let cleanPhrase = phrase.toLowerCase().replace(/[^\w\s/]/gi, ' ').replace(/\s+/g, ' ').trim();
+        if (textLower.includes(cleanPhrase)) {
+          score += (cleanPhrase.split(' ').length * 100);
+        } else {
+          let words = cleanPhrase.split(' ');
+          let matchesCount = 0;
+          words.forEach(w => { if (w.length > 3 && textLower.includes(w)) matchesCount++; });
+          if (matchesCount > 0) score += (matchesCount * 15);
+        }
+      });
+
+      negatedTerms.forEach(negTerm => {
+        k.phrases.forEach(phrase => { if (phrase.includes(negTerm)) score -= 300; });
+      });
+      return { kadha: k, score: score };
+    });
+
+    scores.sort((a, b) => b.score - a.score);
+    const topMatch = scores[0];
+    const runnerUp = scores[1];
+
+    if (topMatch && topMatch.score > 0) {
+      if (runnerUp && runnerUp.score > 0 && Math.abs(topMatch.score - runnerUp.score) <= 80) {
+        discrepancyState.active = true;
+        discrepancyState.optionA = topMatch.kadha;
+        discrepancyState.optionB = runnerUp.kadha;
+        aiDiv.textContent = `${contextPrefix}I notice an overlap. Do you mean ${topMatch.kadha.name} (like ${topMatch.kadha.purpose}) or ${runnerUp.kadha.name} (like ${runnerUp.kadha.purpose})?`;
+      } else {
+        discrepancyState.active = false;
+        aiDiv.textContent = `${contextPrefix}I recommend ${topMatch.kadha.name} for this.`;
+        selectFormulationValue(topMatch.kadha.id);
+      }
+    } else {
+      discrepancyState.active = false;
+      aiDiv.textContent = `${contextPrefix}Could you give me a bit more detail about what's bothering you?`;
+    }
+
+    chatBox.appendChild(aiDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function triggerUpload() { document.getElementById('fileUpload').click(); }
+
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith('.pdf')) {
+      alert("Only PDF files are currently supported for uploads.");
+      event.target.value = '';
+      return;
+    }
+
+    const fileName = file.name;
+    const now = new Date();
+    reportsDatabase.unshift({ fileName: fileName, dateStr: now.toLocaleDateString(), timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+    writeToLog(`uploaded report: ${fileName}`);
+
+    const chatBox = document.getElementById('chatBox');
+    const userDiv = document.createElement('div');
+    userDiv.className = 'chat-msg msg-user';
+    userDiv.innerHTML = `<em>📄 Uploaded: ${fileName}</em>`;
+    chatBox.appendChild(userDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    setTimeout(() => {
+      const contextPrefix = `I have logged your report (${fileName}). `;
+      processAIInput(fileName, contextPrefix);
+    }, 750);
+    event.target.value = '';
+  }
+
+  function renderRecipes() {
+    const container = document.getElementById('recipesListContainer');
+    container.innerHTML = '';
+    kadhaDB.forEach((k, index) => {
+      const num = String(index + 1).padStart(2, '0');
+      const card = document.createElement('div');
+      card.className = 'recipe-card';
+      
+      let ingredientsList = '<ol style="padding-left: 20px; margin-top: 8px; font-weight: 500; font-size: 11px;">';
+      k.recipe.forEach(ing => {
+          ingredientsList += `<li style="margin-bottom: 4px;">${ing.name} - ${ing.pct}%</li>`;
+      });
+      ingredientsList += '</ol>';
+
+      card.innerHTML = `
+        <div class="recipe-header" onclick="this.parentElement.classList.toggle('open')">
+          <div class="recipe-info">
+            <span class="recipe-title">#${num} - ${k.name}</span>
+            <span class="recipe-purpose">${k.purpose}</span>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </div>
+        <div class="recipe-ingredients">Formulation Ratio: ${ingredientsList}</div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function updateReportsUI() {
+    const placeholder = document.getElementById('emptyStatePlaceholder');
+    const container = document.getElementById('reportsListContainer');
+    if (reportsDatabase.length === 0) { placeholder.classList.remove('hidden'); container.classList.add('hidden'); return; }
+    placeholder.classList.add('hidden'); container.classList.remove('hidden'); container.innerHTML = '';
+    reportsDatabase.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'history-item-card';
+      card.innerHTML = `<div class="history-item-header"><div class="history-item-title">📄 ${item.fileName}</div><div class="history-item-date">${item.dateStr} • ${item.timeStr}</div></div><div class="history-item-form" style="color: var(--text-sub); background: var(--bg-main);">Processed & Analyzed</div>`;
+      container.appendChild(card);
+    });
+  }
+
+  function saveToHistory(kadhaTitle, dispenseForm, dispenseAmount) {
+    const now = new Date();
+    historyDatabase.unshift({ title: kadhaTitle, form: dispenseForm, amount: dispenseAmount, dateStr: now.toLocaleDateString(), timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+  }
+
+  function updateHistoryUI() {
+    const placeholder = document.getElementById('emptyStatePlaceholder');
+    const container = document.getElementById('historyListContainer');
+    if (historyDatabase.length === 0) { placeholder.classList.remove('hidden'); container.classList.add('hidden'); return; }
+    placeholder.classList.add('hidden'); container.classList.remove('hidden'); container.innerHTML = '';
+    historyDatabase.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'history-item-card';
+      const formLabelText = item.form === 'Drink' ? 'Hot Cup' : 'Pouch';
+      card.innerHTML = `<div class="history-item-header"><div class="history-item-title">${item.title}</div><div class="history-item-date">${item.dateStr} • ${item.timeStr}</div></div><div class="history-item-form">Format: ${formLabelText} (${item.amount})</div>`;
+      container.appendChild(card);
+    });
+  }
+
+  function triggerBoilerFlush() { 
+    writeToLog("boiler_flush initiated locally"); 
+    sendBLECommand("CMD|BOILER_FLUSH"); 
+    const lastFlushElem = document.getElementById('statLastFlush');
+    if (lastFlushElem) lastFlushElem.innerText = getTimestamp();
+    alert("Boiler Flush cycle initialized."); 
+  }
+
+  function switchTab(tabId) {
+    closeSubPage();
+    document.getElementById('nav-vedic').classList.remove('active');
+    document.getElementById('nav-machine').classList.remove('active');
+    document.getElementById('nav-' + tabId).classList.add('active');
+    if(tabId === 'vedic') { document.getElementById('tab-vedic').classList.remove('hidden'); document.getElementById('tab-machine').classList.add('hidden'); } 
+    else { document.getElementById('tab-vedic').classList.add('hidden'); document.getElementById('tab-machine').classList.remove('hidden'); }
+  }
+
+  function openSubPage(pageTitle) {
+    document.getElementById('tab-vedic').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.add('hidden');
+    document.getElementById('tab-subpage').classList.remove('hidden');
+    document.getElementById('subPageTitle').innerText = pageTitle;
+    document.getElementById('historyListContainer').classList.add('hidden');
+    document.getElementById('reportsListContainer').classList.add('hidden');
+    document.getElementById('recipesListContainer').classList.add('hidden');
+    document.getElementById('emptyStatePlaceholder').classList.add('hidden');
+
+    if(pageTitle === 'History') { updateHistoryUI(); } 
+    else if (pageTitle === 'Reports') { updateReportsUI(); } 
+    else if (pageTitle === 'Recipes') { document.getElementById('recipesListContainer').classList.remove('hidden'); }
+  }
+
+  function closeSubPage() {
+    document.getElementById('tab-subpage').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.add('hidden');
+    document.getElementById('tab-vedic').classList.remove('hidden');
+  }
+
+  function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+  function sendMessage() {
+    const inputField = document.getElementById('chatInput');
+    const msgText = inputField.value.trim();
+    if(msgText !== "") {
+      const chatBox = document.getElementById('chatBox');
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-msg msg-user';
+      userDiv.textContent = msgText;
+      chatBox.appendChild(userDiv);
+      inputField.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+      setTimeout(() => { processAIInput(msgText, ""); }, 600);
+    }
+  }
+
+  function selectFormulationValue(val) { const selectElem = document.getElementById('formulationSelect'); if (selectElem) { selectElem.value = val; updateFormulationUI(val); } }
+
+  function updateFormulationUI(val) {
+    const targetKadha = kadhaDB.find(k => k.id === val);
+    if(targetKadha) { document.getElementById('selTitle').innerText = targetKadha.name; document.getElementById('selDesc').innerText = `CODE: ${targetKadha.id}`; }
+  }
+
+  let currentBrewTitle = "", currentBrewForm = "", pendingDispenseType = "", currentAmount = "";
+  let pendingDispenseData = null;
+  let selectedAllergens = [];
+
+  function dispenseAction(type) {
+    pendingDispenseType = type;
+    currentBrewTitle = document.getElementById('selTitle').innerText;
+    const qtySelect = document.getElementById('qtySelect');
+    qtySelect.innerHTML = '';
+    if (type === 'Drink') {
+      document.getElementById('qtyModalTitle').innerText = 'Select Volume (Liquid)';
+      ['100 ml', '120 ml', '150 ml', '180 ml'].forEach(vol => { qtySelect.innerHTML += `<option value="${vol}">${vol}</option>`; });
+    } else {
+      document.getElementById('qtyModalTitle').innerText = 'Select Weight (Powder/Pouch)';
+      ['10 grams', '20 grams', '30 grams'].forEach(wt => { qtySelect.innerHTML += `<option value="${wt}">${wt}</option>`; });
+    }
+    document.getElementById('quantityModal').classList.remove('hidden');
+  }
+
+  function closeQuantityModal() { document.getElementById('quantityModal').classList.add('hidden'); }
+
+  function confirmDispense() {
+    currentAmount = document.getElementById('qtySelect').value;
+    currentBrewForm = pendingDispenseType;
+    closeQuantityModal();
+
+    const targetKadha = kadhaDB.find(k => k.name === currentBrewTitle);
+    const ingredientNames = targetKadha.recipe.map(ing => ing.name);
+
+    pendingDispenseData = {
+      title: currentBrewTitle,
+      form: currentBrewForm,
+      amount: currentAmount,
+      targetKadha: targetKadha
+    };
+
+    const allergyListElem = document.getElementById('allergyIngredientsList');
+    allergyListElem.innerHTML = `<strong>Ingredients in ${currentBrewTitle}:</strong><br>${ingredientNames.join(', ')}`;
+    document.getElementById('allergyModal').classList.remove('hidden');
+  }
+
+  function handleAllergyNo() {
+    document.getElementById('allergyModal').classList.add('hidden');
+    selectedAllergens = [];
+    executeDispense();
+  }
+
+  function handleAllergyYes() {
+    document.getElementById('allergyModal').classList.add('hidden');
+    
+    const container = document.getElementById('allergenCheckboxContainer');
+    container.innerHTML = '';
+    
+    const targetKadha = pendingDispenseData.targetKadha;
+    targetKadha.recipe.forEach(ing => {
+      container.innerHTML += `
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" class="allergen-chk" value="${ing.name}" style="width: 16px; height: 16px; cursor: pointer;">
+          <span>${ing.name}</span>
+        </label>
+      `;
+    });
+    
+    document.getElementById('allergenSelectModal').classList.remove('hidden');
+  }
+
+  function confirmAllergenSelection() {
+    const checkboxes = document.querySelectorAll('.allergen-chk:checked');
+    selectedAllergens = Array.from(checkboxes).map(cb => cb.value);
+
+    if (selectedAllergens.length === 0) {
+      alert("Please select at least one ingredient you are allergic to, or click 'Go Back'.");
+      return;
+    }
+
+    document.getElementById('allergenSelectModal').classList.add('hidden');
+
+    const confirmTextElem = document.getElementById('allergenConfirmText');
+    confirmTextElem.innerHTML = `Do you wish to continue preparing <strong>${pendingDispenseData.title}</strong> excluding: <br><span style="color: #dc3545; font-weight: 700;">${selectedAllergens.join(', ')}</span>?`;
+    document.getElementById('allergenConfirmModal').classList.remove('hidden');
+  }
+
+  function proceedWithoutAllergens() {
+    document.getElementById('allergenConfirmModal').classList.add('hidden');
+    executeDispense();
+  }
+
+  function cancelAllergyCheck() {
+    document.getElementById('allergyModal').classList.add('hidden');
+    document.getElementById('allergenSelectModal').classList.add('hidden');
+    document.getElementById('allergenConfirmModal').classList.add('hidden');
+    pendingDispenseData = null;
+    selectedAllergens = [];
+  }
+
+  function executeDispense() {
+    const data = pendingDispenseData;
+    if (!data) return;
+
+    let totalGrams = 0;
+    if (data.form === 'Drink') {
+      const ml = parseInt(data.amount);
+      totalGrams = (ml / 200) * 4.0;
+    } else {
+      totalGrams = parseInt(data.amount);
+    }
+
+    const slotMap = {};
+    for (let i = 1; i <= 12; i++) {
+      const slotElem = document.getElementById('slot-' + i);
+      if (slotElem) {
+        let normalizedName = slotElem.innerText.trim().toLowerCase().replace(' seeds', '');
+        slotMap[normalizedName] = i;
+      }
+    }
+
+    const activeRecipe = data.targetKadha.recipe.filter(ing => !selectedAllergens.includes(ing.name));
+
+    if (activeRecipe.length === 0) {
+      alert("All ingredients in this formulation were marked as allergens. Cannot dispense empty formulation.");
+      cancelAllergyCheck();
+      return;
+    }
+
+    let dispensePayload = [];
+    let displayItems = [];
+
+    activeRecipe.forEach(ing => {
+      const ingNameLower = ing.name.toLowerCase().replace(' seeds', '');
+      const slotNum = slotMap[ingNameLower] || 'Unknown';
+      const calculatedGrams = (totalGrams * (ing.pct / 100)).toFixed(2);
+      
+      dispensePayload.push(`Slot ${slotNum}, ${calculatedGrams}g`);
+      displayItems.push(`• ${ing.name}: ${calculatedGrams}g (Slot ${slotNum})`);
+    });
+
+    const step1 = document.getElementById('step-text-1');
+    const step2 = document.getElementById('step-text-2');
+    const step3 = document.getElementById('step-text-3');
+    const step4 = document.getElementById('step-text-4');
+    const step5 = document.getElementById('step-text-5');
+
+    if (data.form === 'Drink') {
+      dispensePayload.push(`Water, ${data.amount}`);
+      displayItems.push(`• Water: ${data.amount}`);
+
+      document.getElementById('prepSub').innerText = 'Extracting goodness from natural herbs...';
+      document.getElementById('dispOutputVal').innerText = 'Hot Brew';
+
+      if (step1) step1.innerText = "Dispensing ingredients";
+      if (step2) step2.innerText = "Grinding & blending";
+      if (step3) step3.innerText = "Brewing in progress";
+      if (step4) step4.innerText = "Herbal filtration";
+      if (step5) step5.innerText = "Dispensing formulation";
+    } else {
+      document.getElementById('prepSub').innerText = 'Packing in pouch...';
+      // Completely corrected to simple form 'Pouch Pack'
+      document.getElementById('dispOutputVal').innerText = 'Pouch Pack';
+
+      if (step1) step1.innerText = "Dispensing ingredients";
+      if (step2) step2.innerText = "Grinding & powdering";
+      if (step3) step3.innerText = "Drying & micro-blending";
+      if (step4) step4.innerText = "Sealing pouch";
+      if (step5) step5.innerText = "Pouch ready for dispatch";
+    }
+
+    document.getElementById('prepTitle').innerText = `Preparing ${data.title}`;
+    document.getElementById('dispServingVal').innerText = data.amount;
+
+    const listContainer = document.getElementById('dispenseIngredientList');
+    if (listContainer) {
+      listContainer.innerHTML = displayItems.map(item => `<div>${item}</div>`).join('');
+    }
+
+    document.getElementById('tab-vedic').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.remove('hidden');
+
+    const safeTitle = data.title.replace(/\s+/g, '_');
+    const bleCommand = `DISPENSE|${safeTitle}|${dispensePayload.join('|')}`;
+
+    writeToLog(`TX: ${bleCommand}`);
+    sendBLECommand(bleCommand);
+    runDispenseProgress();
+  }
+
+  function runDispenseProgress() {
+    let progress = 0; const totalTimeSec = 10; let secondsLeft = totalTimeSec;
+    document.getElementById('prepDoneBtn').classList.add('hidden');
+    document.getElementById('ringPct').innerText = '0%';
+    document.getElementById('ringFill').style.strokeDashoffset = 283;
+    document.getElementById('etaCountdown').innerText = `${secondsLeft} seconds`;
+    if (prepTimerInterval) clearInterval(prepTimerInterval);
+    updateTimelineSteps(0);
+    prepTimerInterval = setInterval(() => {
+      progress += 2; if (progress > 100) progress = 100;
+      const offset = 283 - (283 * progress / 100);
+      document.getElementById('ringFill').style.strokeDashoffset = offset;
+      document.getElementById('ringPct').innerText = `${progress}%`;
+      secondsLeft = Math.max(0, Math.ceil(totalTimeSec * (1 - progress / 100)));
+      document.getElementById('etaCountdown').innerText = (secondsLeft > 0) ? `${secondsLeft} seconds` : 'Ready to serve!';
+      updateTimelineSteps(progress);
+      
+      if (progress >= 100) {
+        clearInterval(prepTimerInterval);
+        document.getElementById('prepSub').innerText = 'Your fresh herbal infusion is ready!';
+        document.getElementById('prepDoneBtn').classList.remove('hidden');
+        writeToLog(`completed ${currentBrewTitle}`);
+        saveToHistory(currentBrewTitle, currentBrewForm, currentAmount);
+
+        // Auto Flush Cycle trigger if enabled and direct drink dispensing
+        if (currentBrewForm === 'Drink' && autoFlushEnabled) {
+          setTimeout(() => {
+            writeToLog("Auto flush initiated after drink dispense");
+            sendBLECommand("CMD|BOILER_FLUSH");
+            const lastFlushElem = document.getElementById('statLastFlush');
+            if (lastFlushElem) lastFlushElem.innerText = getTimestamp();
+          }, 1000);
+        }
+      }
+    }, 200);
+  }
+
+  function updateTimelineSteps(pct) {
+    const steps = [{ id: 'step-1', minPct: 0 }, { id: 'step-2', minPct: 25 }, { id: 'step-3', minPct: 50 }, { id: 'step-4', minPct: 75 }, { id: 'step-5', minPct: 95 }];
+    steps.forEach((step) => {
+      const elem = document.getElementById(step.id);
+      if (!elem) return;
+      elem.classList.remove('done', 'active');
+      if (pct > step.minPct + 20 || pct >= 100) elem.classList.add('done');
+      else if (pct >= step.minPct) elem.classList.add('active');
+    });
+  }
+
+  function finishDispensing() { closeSubPage(); }
+  function openIngredientModal() { document.getElementById('ingredientModal').classList.remove('hidden'); }
+  function closeIngredientModal() { document.getElementById('ingredientModal').classList.add('hidden'); document.getElementById('modalIngredientInput').value = ''; }
+  function saveIngredientUpdate() {
+    const slotNum = document.getElementById('modalSlotSelect').value;
+    const newName = document.getElementById('modalIngredientInput').value.trim();
+    if(newName !== "") {
+      const slotElement = document.getElementById('slot-' + slotNum);
+      if(slotElement) slotElement.textContent = newName;
+      writeToLog(`hopper slot ${slotNum} updated to ${newName}`);
+    }
+    closeIngredientModal();
+  }
+</script>
+</body>
+</html>
