@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Local AI Dynamic Action Web App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 550px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    textarea {
+      width: 100%;
+      height: 90px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+    #status {
+      font-size: 14px;
+      font-weight: bold;
+      color: #666;
+      margin-bottom: 15px;
+    }
+    .action-container {
+      margin-top: 25px;
+      padding: 15px;
+      border-top: 2px solid #eee;
+      text-align: center;
+    }
+    /* Dynamic Action Button */
+    #dynamicBtn {
+      display: inline-block;
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
+      background-color: #9e9e9e; /* Default gray state */
+    }
+    #dynamicBtn:active {
+      transform: scale(0.98);
+    }
+    #suggestionText {
+      font-size: 14px;
+      margin-bottom: 12px;
+      color: #444;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Smart Web Assistant</h2>
+    <div id="status">⏳ Loading local AI model into browser memory...</div>
+
+    <label for="userInput"><strong>Tell us how we can help:</strong></label>
+    <textarea id="userInput" placeholder="Type here... (e.g., 'This product is amazing I want it!', 'It is broken and not working', or 'I don't know which one to pick')" disabled></textarea>
+
+    <div class="action-container">
+      <p id="suggestionText">AI will suggest an action based on your text above.</p>
+      
+      <!-- This button dynamically changes color, text, and function based on AI decision -->
+      <button id="dynamicBtn" onclick="executeCurrentAction()" disabled>Waiting for input...</button>
+    </div>
+  </div>
+
+  <!-- Load Transformers.js CDN -->
+  <script type="module">
+    import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+
+    let classifier;
+    let currentMode = 'none';
+
+    // 1. Initialize the small Zero-Shot Classification model
+    async function initAI() {
+      // Small MobileBERT model (~25MB download, cached after first load)
+      classifier = await pipeline('zero-shot-classification', 'Xenova/mobilebert-uncased-mnli');
+      
+      document.getElementById('status').innerText = '✅ AI Model Ready! Start typing below.';
+      document.getElementById('status').style.color = 'green';
+      document.getElementById('userInput').disabled = false;
+    }
+
+    // 2. Classify text as user types (or on key up)
+    let typingTimer;
+    document.getElementById('userInput').addEventListener('input', (e) => {
+      clearTimeout(typingTimer);
+      const text = e.target.value.trim();
+      
+      if (!text) {
+        resetButton();
+        return;
+      }
+
+      // Debounce typing so it doesn't trigger on every single key press instantly
+      typingTimer = setTimeout(() => analyzeText(text), 600);
+    });
+
+    // 3. AI decision logic
+    async function analyzeText(text) {
+      document.getElementById('status').innerText = '🔍 Analyzing intent locally...';
+      
+      // Define our 3 target categories
+      const candidateLabels = ['happy', 'unhappy', 'indecisive'];
+      
+      // Run AI prediction directly in browser memory
+      const output = await classifier(text, candidateLabels);
+      const topChoice = output.labels[0]; // Highest confidence match
+      const score = (output.scores[0] * 100).toFixed(0);
+
+      document.getElementById('status').innerText = `✅ AI Ready (Detected: ${topChoice} - ${score}% confidence)`;
+
+      // 4. Update Button Color, Text, and Suggestion based on AI decision
+      updateUI(topChoice);
+    }
+
+    function updateUI(mode) {
+      currentMode = mode;
+      const btn = document.getElementById('dynamicBtn');
+      const suggestion = document.getElementById('suggestionText');
+      btn.disabled = false;
+
+      if (mode === 'happy') {
+        // Mode 1: Green Button -> Checkout / Purchase
+        btn.style.backgroundColor = '#2e7d32'; // Green
+        btn.innerText = '🛒 Proceed to Checkout / Purchase';
+        suggestion.innerText = 'Suggestion: User is happy! Directing to complete purchase.';
+
+      } else if (mode === 'unhappy') {
+        // Mode 2: Red Button -> Customer Support
+        btn.style.backgroundColor = '#d32f2f'; // Red
+        btn.innerText = '🚨 Connect to Customer Support';
+        suggestion.innerText = 'Suggestion: User is not happy! Recommending immediate support.';
+
+      } else if (mode === 'indecisive') {
+        // Mode 3: Yellow/Orange Button -> Decision Helper / Guide
+        btn.style.backgroundColor = '#f57c00'; // Orange/Yellow
+        btn.innerText = '💡 Help Me Decide / View Recommendations';
+        suggestion.innerText = 'Suggestion: User is indecisive. Recommending product guidance.';
+      }
+    }
+
+    function resetButton() {
+      currentMode = 'none';
+      const btn = document.getElementById('dynamicBtn');
+      btn.style.backgroundColor = '#9e9e9e';
+      btn.innerText = 'Waiting for input...';
+      btn.disabled = true;
+      document.getElementById('suggestionText').innerText = 'AI will suggest an action based on your text above.';
+      document.getElementById('status').innerText = '✅ AI Model Ready! Start typing below.';
+    }
+
+    // 5. Button action listener based on current mode
+    window.executeCurrentAction = function() {
+      if (currentMode === 'happy') {
+        alert('Action Triggered: Thank you! Redirecting you to the Purchase & Checkout Page...');
+        // Example redirect: window.location.href = '/checkout';
+      } else if (currentMode === 'unhappy') {
+        alert('Action Triggered: Opening live chat with Customer Support immediately...');
+        // Example redirect: window.location.href = '/support';
+      } else if (currentMode === 'indecisive') {
+        alert('Action Triggered: Opening Product Comparison Guide & Questionnaire...');
+        // Example action: Open a modal or recommendation list
+      }
+    };
+
+    // Load AI on boot
+    initAI();
+  </script>
+
+</body>
+</html>

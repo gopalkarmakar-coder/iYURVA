@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iYurva Vedic AI</title>
+<style>
+  :root {
+    --bg-main: #f0f4f1;
+    --card-bg: #eaf0eb;
+    --white: #ffffff;
+    --text-dark: #1a2b22;
+    --text-sub: #637668;
+    --primary-dark: #1b4231;
+    --primary-light: #d8e5db;
+    --accent-green: #22a06b;
+    --accent-orange: #f5a623;
+    --border-color: #d1ded5;
+    --chat-user: #dcf8c6;
+    
+    /* Unique button colors */
+    --btn-history-bg: #1b4231;
+    --btn-reports-bg: #4a7c59;
+    --btn-recipes-bg: #82a38d;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #e5e5e5;
+    background-image: radial-gradient(#d4d4d4 1px, transparent 0);
+    background-size: 20px 20px;
+    padding: 20px;
+  }
+
+  /* Main Phone Container */
+  .app-container {
+    width: 414px;
+    height: 850px;
+    background-color: var(--bg-main);
+    border: 12px solid #fff;
+    border-radius: 45px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    padding-bottom: 90px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Utility Classes */
+  .hidden { display: none !important; }
+
+  button, select, .interactive {
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  button:hover, .interactive:hover { filter: brightness(0.95); }
+  button:active, .interactive:active { transform: scale(0.97); }
+
+  /* Top Bar */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .brand {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .brand i { font-style: italic; color: var(--primary-dark); }
+  .badge-pill {
+    background: var(--primary-light);
+    color: var(--text-sub);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .status-pill {
+    background: #e2f2e9;
+    color: var(--primary-dark);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #cce5d6;
+    user-select: none;
+  }
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background-color: var(--accent-green);
+    border-radius: 50%;
+  }
+  .status-dot.disconnected { background-color: #dc3545; }
+
+  /* User Row */
+  .user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .user-info-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .avatar {
+    width: 44px;
+    height: 44px;
+    background: var(--primary-dark);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+  }
+  .user-text h1 { font-size: 22px; color: var(--text-dark); font-weight: 700; }
+
+  /* Cards General */
+  .card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 16px;
+    border: 1px solid var(--border-color);
+  }
+  .card-white { background: var(--white); }
+
+  /* AI Card & Chat */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .ai-badge {
+    background: var(--primary-light);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-dark);
+    text-transform: uppercase;
+  }
+  
+  .chat-history {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 12px;
+    height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+  }
+  .chat-msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .msg-ai {
+    background: var(--bg-main);
+    color: var(--text-dark);
+    border-radius: 14px 14px 14px 4px;
+    align-self: flex-start;
+  }
+  .msg-user {
+    background: var(--chat-user);
+    color: var(--text-dark);
+    border-radius: 14px 14px 4px 14px;
+    align-self: flex-end;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .input-group input {
+    flex: 1;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 14px;
+    background: var(--white);
+    outline: none;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset;
+  }
+  .btn-icon {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .btn-plus { background: var(--primary-light); color: var(--text-dark); font-size: 20px; }
+  .btn-submit { background: var(--primary-dark); color: var(--white); }
+
+  /* Action buttons with distinct colors */
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  .action-buttons button {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    display: flex; justify-content: center; align-items: center; gap: 6px;
+    color: var(--white);
+  }
+  .btn-history-nav { background: var(--btn-history-bg); }
+  .btn-reports-nav { background: var(--btn-reports-bg); }
+  .btn-recipes-nav { background: var(--btn-recipes-bg); }
+
+  /* Empty State Overlay / Page */
+  .empty-state-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 40px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    border: 1px solid var(--border-color);
+    min-height: 300px;
+  }
+  .empty-state-title { font-size: 20px; font-weight: 700; color: var(--text-dark); }
+  .empty-state-text { font-size: 14px; color: var(--text-sub); }
+  .btn-back {
+    background: var(--primary-dark);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  /* Formulation Section */
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-transform: uppercase;
+  }
+  .formulation-select-wrapper { display: flex; gap: 10px; margin-bottom: 16px; }
+  .custom-select {
+    flex: 1; background: var(--white); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 12px 16px; position: relative;
+  }
+  .custom-select select {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0; cursor: pointer;
+  }
+  .select-content { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .select-text h4 { font-size: 15px; color: var(--text-dark); margin-bottom: 4px; }
+  .select-text p { font-size: 11px; color: var(--text-sub); font-family: monospace; }
+  .select-arrow { background: var(--bg-main); width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
+  .btn-pencil { width: 55px; background: #b5ccb8; border: none; border-radius: 16px; display: flex; justify-content: center; align-items: center; color: var(--primary-dark); }
+
+  .dispense-actions { display: flex; gap: 12px; }
+  .dispense-btn {
+    flex: 1; padding: 12px; border-radius: 16px; border: none; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .dispense-btn span.title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px;}
+  .dispense-btn span.sub { font-size: 11px; opacity: 0.8; }
+  .btn-drink { background: var(--primary-dark); color: var(--white); }
+  .btn-pouch { background: #abc9b2; color: var(--primary-dark); }
+
+  /* Machine Area Styles */
+  .machine-status-card {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 14px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-color);
+  }
+  .machine-status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .machine-status-label { font-size: 11px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
+  .machine-status-value { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+
+  .btn-flush {
+    width: 100%; padding: 14px; border-radius: 16px; font-size: 15px; font-weight: 600;
+    border: none; color: var(--white); background: var(--accent-orange); margin-top: 12px; margin-bottom: 12px;
+  }
+  .btn-update-ingredients {
+    width: 100%; padding: 12px; border-radius: 16px; font-size: 14px; font-weight: 600;
+    border: none; color: var(--white); background: var(--primary-dark); margin-top: 12px;
+  }
+
+  /* Hopper Grid */
+  .hopper-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .hopper-grid {
+    background: var(--white); border-radius: 16px; padding: 16px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px;
+  }
+  .hop-item { display: flex; flex-direction: column; gap: 4px; }
+  .hop-label { font-size: 12px; font-weight: 600; color: var(--text-dark); }
+  .hop-label span { color: var(--text-sub); font-weight: 500; }
+  .hop-bar-row { display: flex; align-items: center; gap: 8px; }
+  .progress-bg { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-green { background: var(--accent-green); }
+  .fill-orange { background: var(--accent-orange); }
+  .hop-pct { font-size: 10px; font-weight: 600; color: var(--text-sub); width: 24px; }
+
+  /* Stats for Nerds */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .stat-box { background: var(--white); padding: 12px; border-radius: 12px; }
+  .stat-label { font-size: 10px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; font-weight: 700;}
+  .stat-value { font-size: 13px; font-weight: 600; font-family: monospace; color: var(--primary-dark); }
+  .logs-box { grid-column: span 2; background: var(--text-dark); color: #00ff00; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 10px; height: 60px; overflow-y: auto;}
+
+  /* Bottom Navigation */
+  .bottom-nav {
+    position: absolute; bottom: 0; left: 0; width: 100%; background: var(--white);
+    display: flex; padding: 12px 10px 24px 10px; border-top: 1px solid var(--border-color);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--text-sub); background: none; border: none; font-size: 12px; font-weight: 600;
+  }
+  .nav-item.active { color: var(--primary-dark); }
+  .nav-item svg { fill: currentColor; width: 24px; height: 24px; }
+
+  /* Update Ingredient Modal Overlay */
+  .modal-overlay {
+    position: absolute; top:0; left:0; width:100%; height:100%;
+    background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center;
+    z-index: 100; padding: 20px;
+  }
+  .modal-card {
+    background: var(--white); width: 100%; border-radius: 20px; padding: 20px;
+    display: flex; flex-direction: column; gap: 14px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  }
+  .modal-card h3 { font-size: 16px; color: var(--text-dark); }
+  .modal-card select, .modal-card input {
+    padding: 10px; border-radius: 10px; border: 1px solid var(--border-color); outline: none;
+  }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  .btn-modal { padding: 8px 16px; border-radius: 10px; border: none; font-weight: 600; }
+  .btn-modal-cancel { background: var(--bg-main); color: var(--text-dark); }
+  .btn-modal-save { background: var(--primary-dark); color: var(--white); }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  
+  <div class="scroll-content">
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="brand">
+        <i>i</i>Yurva <span class="badge-pill">POWERED BY VEDIC AI</span>
+      </div>
+      <div class="status-pill interactive" id="statusBtn" onclick="toggleStatus()">
+        <div class="status-dot" id="statusDot"></div> <span id="statusText">Connected</span>
+      </div>
+    </div>
+
+    <!-- User Row -->
+    <div class="user-row">
+      <div class="user-info-wrapper">
+        <div class="avatar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="user-text">
+          <h1>Hello, user!</h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VEDIC AI TAB ================= -->
+    <div id="tab-vedic">
+      
+      <!-- Vedic AI Chat Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="ai-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            VEDIC AI
+          </div>
+        </div>
+        
+        <!-- Chat History -->
+        <div class="chat-history" id="chatBox">
+          <div class="chat-msg msg-ai">Namaste! How are you feeling today?</div>
+        </div>
+        
+        <!-- Chat Input -->
+        <div class="input-group">
+          <button class="btn-icon btn-plus" onclick="triggerUpload()" title="Upload PDF/Report">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <input type="file" id="fileUpload" style="display:none;" />
+          
+          <input type="text" id="chatInput" placeholder="Type your symptoms here..." onkeypress="handleEnter(event)" />
+          
+          <button class="btn-icon btn-submit" onclick="sendMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+
+        <!-- Distinctly colored navigation buttons -->
+        <div class="action-buttons">
+          <button class="btn-history-nav" onclick="openSubPage('History')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> History
+          </button>
+          <button class="btn-reports-nav" onclick="openSubPage('Reports')">Reports</button>
+          <button class="btn-recipes-nav" onclick="openSubPage('Recipes')">Recipes</button>
+        </div>
+      </div>
+
+      <!-- Select Formulation Card -->
+      <div class="card card-white" style="margin-top: 16px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+          <div class="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            SELECT FORMULATION
+          </div>
+        </div>
+
+        <div class="formulation-select-wrapper">
+          <div class="custom-select interactive">
+            <select id="formulationSelect" name="formulation" onchange="updateFormulationUI(this.value)">
+              <option value="cck1">Common Cold Kadha</option>
+              <option value="fever">Fever Karha</option>
+              <option value="diarrhea">Diarrhea Karha</option>
+            </select>
+            <div class="select-content">
+              <div class="select-text">
+                <h4 id="selTitle">Common Cold Kadha</h4>
+                <p id="selDesc">CODE: cck1 • 180ml infusion</p>
+              </div>
+              <div class="select-arrow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+          </div>
+          <!-- Pencil Icon Button for Customize -->
+          <button class="btn-pencil interactive" title="Customize" onclick="alert('Customize Formulation Options')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          </button>
+        </div>
+
+        <div class="dispense-actions">
+          <button class="dispense-btn btn-drink" onclick="dispenseAction('Drink')">
+            <span class="title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 10H7v8a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-8z"></path><line x1="9" y1="10" x2="9" y2="6"></line><line x1="15" y1="10" x2="15" y2="6"></line><path d="M12 6V2"></path></svg> Drink
+            </span>
+            <span class="sub">Dispense into cup</span>
+          </button>
+          <button class="dispense-btn btn-pouch" onclick="dispenseAction('Pouch')">
+            <span class="title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Pouch
+            </span>
+            <span class="sub">Vacuum hermetic seal</span>
+          </button>
+        </div>
+      </div>
+    </div> <!-- End Vedic AI Tab -->
+
+    <!-- ================= SUB-PAGE VIEW (History / Reports / Recipes) ================= -->
+    <div id="tab-subpage" class="hidden">
+      <div class="empty-state-card">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--text-sub)" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+        <div>
+          <div class="empty-state-title" id="subPageTitle">History</div>
+          <div class="empty-state-text" style="margin-top: 4px;">No record found</div>
+        </div>
+        <button class="btn-back interactive" onclick="closeSubPage()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Back to Vedic AI
+        </button>
+      </div>
+    </div>
+
+    <!-- ================= MACHINE TAB ================= -->
+    <div id="tab-machine" class="hidden">
+      
+      <!-- Machine Temperature & Status -->
+      <div class="machine-status-card">
+        <div class="machine-status-item">
+          <span class="machine-status-label">Machine Temp</span>
+          <span class="machine-status-value">94°C</span>
+        </div>
+        <div style="height: 24px; width: 1px; background: var(--border-color);"></div>
+        <div class="machine-status-item">
+          <span class="machine-status-label">Machine Status</span>
+          <span class="machine-status-value" style="color: var(--accent-green);">Ready</span>
+        </div>
+      </div>
+
+      <!-- Boiler Flush Button -->
+      <button class="btn-flush interactive" onclick="alert('Boiler Flush initiated...')">Boiler Flush</button>
+
+      <!-- Hopper Array Status (Complete Slots 1 to 12) -->
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="hopper-header">
+          <div class="section-title">
+            <div class="status-dot"></div> HOPPER ARRAY STATUS
+          </div>
+          <div class="badge-pill" style="background: var(--white); border: 1px solid var(--border-color); color: var(--text-dark); text-transform: none;">
+            12 / 12 Active
+          </div>
+        </div>
+
+        <div class="hopper-grid">
+          <div class="hop-item"><div class="hop-label">Slot 1: <span id="slot-1">Tulsi</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 85%;"></div></div><div class="hop-pct">85%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 7: <span id="slot-7">Licorice</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 95%;"></div></div><div class="hop-pct">95%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 2: <span id="slot-2">Ginger</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 72%;"></div></div><div class="hop-pct">72%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 8: <span id="slot-8">Giloy</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 80%;"></div></div><div class="hop-pct">80%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 3: <span id="slot-3">Clove</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 40%;"></div></div><div class="hop-pct">40%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 9: <span id="slot-9">Cardamom</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 35%;"></div></div><div class="hop-pct">35%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 4: <span id="slot-4">Turmeric</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 90%;"></div></div><div class="hop-pct">90%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 10: <span id="slot-10">Ashwag.</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 60%;"></div></div><div class="hop-pct">60%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 5: <span id="slot-5">Blk Pepp.</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 65%;"></div></div><div class="hop-pct">65%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 11: <span id="slot-11">Mint</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 88%;"></div></div><div class="hop-pct">88%</div></div></div>
+
+          <div class="hop-item"><div class="hop-label">Slot 6: <span id="slot-6">Neem</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 75%;"></div></div><div class="hop-pct">75%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 12: <span id="slot-12">Shatavari</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 82%;"></div></div><div class="hop-pct">82%</div></div></div>
+        </div>
+
+        <button class="btn-update-ingredients interactive" onclick="openIngredientModal()">Update Ingredients</button>
+      </div>
+
+      <!-- Stats for Nerds -->
+      <div class="card">
+        <div class="section-title">
+           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+           STATS FOR NERDS
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">Device ID</div><div class="stat-value">IYV-89X2</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Bits</div><div class="stat-value">1024 kbps</div></div>
+          <div class="stat-box"><div class="stat-label">Est. Prep</div><div class="stat-value">2m 45s</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Delay</div><div class="stat-value">12ms</div></div>
+          <div class="logs-box" id="logsBox">> system init... OK<br>> boiler_temp: 94C<br>> awaiting command...</div>
+        </div>
+      </div>
+
+    </div> <!-- End Machine Tab -->
+
+  </div> <!-- End Scroll Content -->
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-vedic" onclick="switchTab('vedic')">
+      <svg viewBox="0 0 24 24"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 2.96 5.73V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.27C17.81 13.47 19 11.38 19 9c0-3.86-3.14-7-7-7z"/></svg>
+      Vedic AI
+    </button>
+    <button class="nav-item" id="nav-machine" onclick="switchTab('machine')">
+      <svg viewBox="0 0 24 24"><path d="M3 17v2h6v-2H3zM3 5v2h10V5H3zm10 16v-2h8v-2h-8v-2h-2v6h2zM7 9v2H3v2h4v2h2V9H7zm14 4v-2H11v2h10zm-6-4h2V7h4V5h-4V3h-2v6z"/></svg>
+      Machine
+    </button>
+  </div>
+
+  <!-- Update Ingredients Modal -->
+  <div class="modal-overlay hidden" id="ingredientModal">
+    <div class="modal-card">
+      <h3>Update Slot Ingredient</h3>
+      <label style="font-size: 12px; font-weight:600; color: var(--text-sub);">Select Slot:</label>
+      <select id="modalSlotSelect">
+        <option value="1">Slot 1</option>
+        <option value="2">Slot 2</option>
+        <option value="3">Slot 3</option>
+        <option value="4">Slot 4</option>
+        <option value="5">Slot 5</option>
+        <option value="6">Slot 6</option>
+        <option value="7">Slot 7</option>
+        <option value="8">Slot 8</option>
+        <option value="9">Slot 9</option>
+        <option value="10">Slot 10</option>
+        <option value="11">Slot 11</option>
+        <option value="12">Slot 12</option>
+      </select>
+      <label style="font-size: 12px; font-weight:600; color: var(--text-sub);">Ingredient Name:</label>
+      <input type="text" id="modalIngredientInput" placeholder="e.g. Cinnamon" />
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="closeIngredientModal()">Cancel</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="saveIngredientUpdate()">Save</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Tab Switching
+  function switchTab(tabId) {
+    closeSubPage();
+    document.getElementById('nav-vedic').classList.remove('active');
+    document.getElementById('nav-machine').classList.remove('active');
+    document.getElementById('nav-' + tabId).classList.add('active');
+
+    if(tabId === 'vedic') {
+      document.getElementById('tab-vedic').classList.remove('hidden');
+      document.getElementById('tab-machine').classList.add('hidden');
+    } else {
+      document.getElementById('tab-vedic').classList.add('hidden');
+      document.getElementById('tab-machine').classList.remove('hidden');
+    }
+  }
+
+  // Sub-page logic
+  function openSubPage(pageTitle) {
+    document.getElementById('tab-vedic').classList.add('hidden');
+    document.getElementById('tab-subpage').classList.remove('hidden');
+    document.getElementById('subPageTitle').innerText = pageTitle;
+  }
+
+  function closeSubPage() {
+    document.getElementById('tab-subpage').classList.add('hidden');
+    document.getElementById('tab-vedic').classList.remove('hidden');
+  }
+
+  // Connection Status Toggle
+  let isConnected = true;
+  function toggleStatus() {
+    isConnected = !isConnected;
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    const btn = document.getElementById('statusBtn');
+    
+    if(isConnected) {
+      dot.classList.remove('disconnected');
+      text.innerText = 'Connected';
+      btn.style.background = '#e2f2e9';
+      btn.style.color = 'var(--primary-dark)';
+      btn.style.borderColor = '#cce5d6';
+    } else {
+      dot.classList.add('disconnected');
+      text.innerText = 'Disconnected';
+      btn.style.background = '#f8d7da';
+      btn.style.color = '#721c24';
+      btn.style.borderColor = '#f5c6cb';
+    }
+  }
+
+  // Chat Interface & AI Symptom Analysis Logic
+  function handleEnter(e) {
+    if(e.key === 'Enter') sendMessage();
+  }
+
+  function sendMessage() {
+    const inputField = document.getElementById('chatInput');
+    const msgText = inputField.value.trim();
+    
+    if(msgText !== "") {
+      const chatBox = document.getElementById('chatBox');
+      
+      // User Message
+      const userDiv = document.createElement('div');
+      userDiv.className = 'chat-msg msg-user';
+      userDiv.textContent = msgText;
+      chatBox.appendChild(userDiv);
+      inputField.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      // AI Logic Decision Processing
+      setTimeout(() => {
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'chat-msg msg-ai';
+        
+        const text = msgText.toLowerCase();
+
+        // Diarrhea symptoms check
+        if (text.includes('loose') || text.includes('motion') || text.includes('diarrhea') || text.includes('stomach') || text.includes('stool') || text.includes('loose motion')) {
+          aiDiv.textContent = "Based on your symptoms, I detect stomach discomfort. I recommend taking the Diarrhea Karha for soothing digestion.";
+          selectFormulationValue('diarrhea');
+
+        // Fever symptoms check
+        } else if (text.includes('fever') || text.includes('temperature') || text.includes('headache') || text.includes('body pain') || text.includes('hot')) {
+          aiDiv.textContent = "It sounds like you may have a fever. I suggest taking the Fever Karha to help reduce temperature and ease pain.";
+          selectFormulationValue('fever');
+
+        // Common Cold symptoms check (default or explicit)
+        } else if (text.includes('cold') || text.includes('cough') || text.includes('nose') || text.includes('sneezing') || text.includes('throat') || text.includes('clogged')) {
+          aiDiv.textContent = "It seems you are experiencing common cold or cough symptoms. The Common Cold Kadha will help relieve congestion.";
+          selectFormulationValue('cck1');
+
+        } else {
+          aiDiv.textContent = "I have noted your symptoms. For general immunity and recovery, I suggest trying the Common Cold Kadha.";
+          selectFormulationValue('cck1');
+        }
+
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      }, 700);
+    }
+  }
+
+  function triggerUpload() {
+    document.getElementById('fileUpload').click();
+  }
+
+  // Formulation UI Helper Functions
+  function selectFormulationValue(val) {
+    const selectElem = document.getElementById('formulationSelect');
+    if (selectElem) {
+      selectElem.value = val;
+      updateFormulationUI(val);
+    }
+  }
+
+  function updateFormulationUI(val) {
+    const titleObj = document.getElementById('selTitle');
+    const descObj = document.getElementById('selDesc');
+
+    if(val === 'cck1') {
+      titleObj.innerText = 'Common Cold Kadha';
+      descObj.innerText = 'CODE: cck1 • 180ml infusion';
+    } else if (val === 'fever') {
+      titleObj.innerText = 'Fever Karha';
+      descObj.innerText = 'CODE: fvr2 • 150ml infusion';
+    } else if (val === 'diarrhea') {
+      titleObj.innerText = 'Diarrhea Karha';
+      descObj.innerText = 'CODE: drh1 • 120ml infusion';
+    }
+  }
+
+  function dispenseAction(type) {
+    const title = document.getElementById('selTitle').innerText;
+    alert(`Dispensing ${title} as ${type}...`);
+    const logs = document.getElementById('logsBox');
+    if(logs) {
+      logs.innerHTML += `<br>> dispensing ${title} (${type})...`;
+      logs.scrollTop = logs.scrollHeight;
+    }
+  }
+
+  // Modal logic
+  function openIngredientModal() {
+    document.getElementById('ingredientModal').classList.remove('hidden');
+  }
+
+  function closeIngredientModal() {
+    document.getElementById('ingredientModal').classList.add('hidden');
+    document.getElementById('modalIngredientInput').value = '';
+  }
+
+  function saveIngredientUpdate() {
+    const slotNum = document.getElementById('modalSlotSelect').value;
+    const newName = document.getElementById('modalIngredientInput').value.trim();
+    
+    if(newName !== "") {
+      const slotElement = document.getElementById('slot-' + slotNum);
+      if(slotElement) {
+        slotElement.textContent = newName;
+      }
+    }
+    closeIngredientModal();
+  }
+</script>
+</body>
+</html>

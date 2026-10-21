@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iYurva Vedic AI</title>
+<style>
+  :root {
+    --bg-main: #f0f4f1;
+    --card-bg: #eaf0eb;
+    --white: #ffffff;
+    --text-dark: #1a2b22;
+    --text-sub: #637668;
+    --primary-dark: #1b4231;
+    --primary-light: #d8e5db;
+    --accent-green: #22a06b;
+    --accent-orange: #f5a623;
+    --border-color: #d1ded5;
+    --chat-user: #dcf8c6;
+    
+    --btn-history-bg: #1b4231;
+    --btn-reports-bg: #4a7c59;
+    --btn-recipes-bg: #82a38d;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+
+  body {
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; background-color: #e5e5e5;
+    background-image: radial-gradient(#d4d4d4 1px, transparent 0);
+    background-size: 20px 20px; padding: 20px;
+  }
+
+  .app-container {
+    width: 414px; height: 850px; background-color: var(--bg-main);
+    border: 12px solid #fff; border-radius: 45px; overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15); display: flex;
+    flex-direction: column; position: relative;
+  }
+
+  .scroll-content {
+    flex: 1; overflow-y: auto; padding: 24px; padding-bottom: 90px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .hidden { display: none !important; }
+  button, select, .interactive { cursor: pointer; transition: all 0.15s ease; }
+  button:hover, .interactive:hover { filter: brightness(0.95); }
+  button:active, .interactive:active { transform: scale(0.97); }
+
+  .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .brand { font-size: 22px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+  .brand i { font-style: italic; color: var(--primary-dark); }
+  .badge-pill { background: var(--primary-light); color: var(--text-sub); font-size: 9px; font-weight: 700; padding: 4px 8px; border-radius: 12px; letter-spacing: 0.5px; text-transform: uppercase; }
+  
+  .status-pill {
+    background: #f8d7da; color: #721c24; font-size: 12px; font-weight: 600;
+    padding: 6px 12px; border-radius: 16px; display: flex; align-items: center; gap: 6px; border: 1px solid #f5c6cb; user-select: none;
+  }
+  .status-dot { width: 8px; height: 8px; background-color: var(--accent-green); border-radius: 50%; }
+  .status-dot.disconnected { background-color: #dc3545; }
+
+  .user-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .user-info-wrapper { display: flex; align-items: center; gap: 12px; }
+  .avatar { width: 44px; height: 44px; background: var(--primary-dark); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: #fff; }
+  .user-text h1 { font-size: 22px; color: var(--text-dark); font-weight: 700; }
+
+  .card { background: var(--card-bg); border-radius: 20px; padding: 16px; border: 1px solid var(--border-color); }
+  .card-white { background: var(--white); }
+
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .ai-badge { background: var(--primary-light); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 12px; display: flex; align-items: center; gap: 4px; color: var(--text-dark); text-transform: uppercase; }
+  
+  .chat-history { background: var(--white); border-radius: 16px; padding: 12px; height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; border: 1px solid var(--border-color); }
+  .chat-msg { max-width: 85%; padding: 10px 14px; font-size: 13px; line-height: 1.4; }
+  .msg-ai { background: var(--bg-main); color: var(--text-dark); border-radius: 14px 14px 14px 4px; align-self: flex-start; }
+  .msg-user { background: var(--chat-user); color: var(--text-dark); border-radius: 14px 14px 4px 14px; align-self: flex-end; }
+
+  .input-group { display: flex; gap: 8px; margin-bottom: 16px; }
+  .input-group input { flex: 1; border: none; padding: 12px 16px; border-radius: 14px; font-size: 14px; background: var(--white); outline: none; box-shadow: 0 1px 3px rgba(0,0,0,0.05) inset; }
+  .btn-icon { width: 42px; height: 42px; border: none; border-radius: 12px; display: flex; justify-content: center; align-items: center; }
+  .btn-plus { background: var(--primary-light); color: var(--text-dark); font-size: 20px; }
+  .btn-submit { background: var(--primary-dark); color: var(--white); }
+
+  .action-buttons { display: flex; gap: 8px; }
+  .action-buttons button { flex: 1; padding: 10px 0; border-radius: 12px; font-size: 13px; font-weight: 600; border: none; display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--white); }
+  .btn-history-nav { background: var(--btn-history-bg); }
+  .btn-reports-nav { background: var(--btn-reports-bg); }
+  .btn-recipes-nav { background: var(--btn-recipes-bg); }
+
+  .empty-state-card { background: var(--white); border-radius: 20px; padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; border: 1px solid var(--border-color); min-height: 300px; }
+  .empty-state-title { font-size: 20px; font-weight: 700; color: var(--text-dark); }
+  .empty-state-text { font-size: 14px; color: var(--text-sub); }
+  .btn-back { background: var(--primary-dark); color: var(--white); border: none; padding: 10px 20px; border-radius: 14px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+
+  .history-list-container { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 16px; }
+  .history-item-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border-color); }
+  .history-item-header { display: flex; justify-content: space-between; align-items: center; }
+  .history-item-title { font-size: 15px; font-weight: 700; color: var(--text-dark); }
+  .history-item-date { font-size: 12px; color: var(--text-sub); font-family: monospace; font-weight: 600; }
+  .history-item-form { font-size: 12px; background: var(--white); padding: 6px 12px; border-radius: 8px; color: var(--primary-dark); font-weight: 600; display: inline-block; align-self: flex-start; }
+
+  .section-title { font-size: 12px; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
+  .formulation-select-wrapper { display: flex; gap: 10px; margin-bottom: 16px; }
+  .custom-select { flex: 1; background: var(--white); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 16px; position: relative; }
+  .custom-select select { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .select-content { display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .select-text h4 { font-size: 15px; color: var(--text-dark); margin-bottom: 4px; }
+  .select-text p { font-size: 11px; color: var(--text-sub); font-family: monospace; }
+  .select-arrow { background: var(--bg-main); width: 28px; height: 28px; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
+  .btn-pencil { width: 55px; background: #b5ccb8; border: none; border-radius: 16px; display: flex; justify-content: center; align-items: center; color: var(--primary-dark); }
+
+  .dispense-actions { display: flex; gap: 12px; }
+  .dispense-btn { flex: 1; padding: 12px; border-radius: 16px; border: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .dispense-btn span.title { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 6px;}
+  .dispense-btn span.sub { font-size: 11px; opacity: 0.8; }
+  .btn-drink { background: var(--primary-dark); color: var(--white); }
+  .btn-pouch { background: #abc9b2; color: var(--primary-dark); }
+
+  .machine-status-card { background: var(--white); border-radius: 16px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border-color); }
+  .machine-status-item { display: flex; flex-direction: column; gap: 2px; }
+  .machine-status-label { font-size: 11px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
+  .machine-status-value { font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+
+  .btn-flush { width: 100%; padding: 14px; border-radius: 16px; font-size: 15px; font-weight: 600; border: none; color: var(--white); background: var(--accent-orange); margin-top: 12px; margin-bottom: 12px; }
+  .btn-update-ingredients { width: 100%; padding: 12px; border-radius: 16px; font-size: 14px; font-weight: 600; border: none; color: var(--white); background: var(--primary-dark); margin-top: 12px; }
+
+  .hopper-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .hopper-grid { background: var(--white); border-radius: 16px; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
+  .hop-item { display: flex; flex-direction: column; gap: 4px; }
+  .hop-label { font-size: 12px; font-weight: 600; color: var(--text-dark); }
+  .hop-label span { color: var(--text-sub); font-weight: 500; }
+  .hop-bar-row { display: flex; align-items: center; gap: 8px; }
+  .progress-bg { flex: 1; height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 3px; }
+  .fill-green { background: var(--accent-green); }
+  .fill-orange { background: var(--accent-orange); }
+  .hop-pct { font-size: 10px; font-weight: 600; color: var(--text-sub); width: 24px; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .stat-box { background: var(--white); padding: 12px; border-radius: 12px; }
+  .stat-label { font-size: 10px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 4px; font-weight: 700;}
+  .stat-value { font-size: 13px; font-weight: 600; font-family: monospace; color: var(--primary-dark); }
+  .logs-box { grid-column: span 2; background: var(--text-dark); color: #00ff00; padding: 12px; border-radius: 12px; font-family: monospace; font-size: 10px; height: 120px; overflow-y: auto;}
+
+  .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--white); display: flex; padding: 12px 10px 24px 10px; border-top: 1px solid var(--border-color); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-sub); background: none; border: none; font-size: 12px; font-weight: 600; }
+  .nav-item.active { color: var(--primary-dark); }
+  .nav-item svg { fill: currentColor; width: 24px; height: 24px; }
+
+  .modal-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; z-index: 100; padding: 20px; }
+  .modal-card { background: var(--white); width: 100%; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+  .modal-card h3 { font-size: 16px; color: var(--text-dark); }
+  .modal-card select, .modal-card input { padding: 10px; border-radius: 10px; border: 1px solid var(--border-color); outline: none; font-size: 14px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+  .btn-modal { padding: 8px 16px; border-radius: 10px; border: none; font-weight: 600; }
+  .btn-modal-cancel { background: var(--bg-main); color: var(--text-dark); }
+  .btn-modal-save { background: var(--primary-dark); color: var(--white); }
+
+  .prep-header { text-align: center; margin-bottom: 12px; }
+  .prep-header h2 { font-size: 20px; color: var(--text-dark); font-weight: 800; margin-bottom: 4px; }
+  .prep-header p { font-size: 12px; color: var(--text-sub); }
+
+  .prep-main-card { background: var(--white); border-radius: 20px; padding: 20px 16px; border: 1px solid var(--border-color); display: flex; gap: 16px; align-items: center; }
+
+  .ring-box { position: relative; width: 110px; height: 110px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+  .ring-box svg { transform: rotate(-90deg); width: 110px; height: 110px; }
+  .ring-bg { fill: none; stroke: var(--primary-light); stroke-width: 9; }
+  .ring-fill { fill: none; stroke: var(--primary-dark); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 0.3s ease; }
+  .ring-text { position: absolute; font-size: 22px; font-weight: 800; color: var(--text-dark); }
+
+  .prep-steps { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .step-item { display: flex; align-items: center; gap: 10px; font-size: 12px; font-weight: 600; color: var(--text-sub); transition: color 0.2s ease; }
+  .step-item.active { color: var(--text-dark); font-weight: 700; }
+  .step-item.done { color: var(--primary-dark); }
+  .step-icon { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border-color); background: var(--white); display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+  .step-item.done .step-icon { background: var(--primary-dark); border-color: var(--primary-dark); color: var(--white); }
+  .step-item.active .step-icon { background: var(--accent-green); border-color: var(--accent-green); box-shadow: 0 0 0 3px rgba(34, 160, 107, 0.25); }
+
+  .prep-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .prep-meta-box { background: var(--white); padding: 12px; border-radius: 16px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; }
+  .prep-meta-icon { width: 32px; height: 32px; background: var(--bg-main); border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--primary-dark); }
+  .prep-meta-text { display: flex; flex-direction: column; }
+  .prep-meta-label { font-size: 10px; color: var(--text-sub); font-weight: 600; text-transform: uppercase; }
+  .prep-meta-val { font-size: 12px; font-weight: 700; color: var(--text-dark); }
+
+  .eta-banner { background: #e1ede3; border-radius: 16px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; border: 1px solid #c8dccb; }
+  .eta-icon { color: var(--primary-dark); display: flex; align-items: center; }
+  .eta-text h5 { font-size: 11px; color: var(--text-sub); text-transform: uppercase; font-weight: 700; }
+  .eta-text p { font-size: 15px; font-weight: 800; color: var(--primary-dark); }
+  .motto-footer { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--text-sub); text-transform: uppercase; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <div class="scroll-content">
+    
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <div class="brand"><i>i</i>Yurva <span class="badge-pill">POWERED BY VEDIC AI</span></div>
+      <div class="status-pill interactive" id="statusBtn" onclick="toggleStatus()">
+        <div class="status-dot disconnected" id="statusDot"></div> <span id="statusText">Disconnected</span>
+      </div>
+    </div>
+
+    <!-- User Row -->
+    <div class="user-row">
+      <div class="user-info-wrapper">
+        <div class="avatar">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div class="user-text"><h1>Hello, Boss</h1></div>
+      </div>
+    </div>
+
+    <!-- VEDIC AI TAB -->
+    <div id="tab-vedic">
+      <div class="card">
+        <div class="card-header">
+          <div class="ai-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"/></svg>
+            VEDIC AI
+          </div>
+        </div>
+        
+        <div class="chat-history" id="chatBox">
+          <div class="chat-msg msg-ai">Namaste! How are you feeling today?</div>
+        </div>
+        
+        <div class="input-group">
+          <button class="btn-icon btn-plus" onclick="triggerUpload()" title="Upload PDF/Report">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+          <input type="file" id="fileUpload" style="display:none;" accept="application/pdf" onchange="handleFileUpload(event)" />
+          <input type="text" id="chatInput" placeholder="Type your symptoms here..." onkeypress="handleEnter(event)" />
+          <button class="btn-icon btn-submit" onclick="sendMessage()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </div>
+
+        <div class="action-buttons">
+          <button class="btn-history-nav" onclick="openSubPage('History')">History</button>
+          <button class="btn-reports-nav" onclick="openSubPage('Reports')">Reports</button>
+          <button class="btn-recipes-nav" onclick="openSubPage('Recipes')">Recipes</button>
+        </div>
+      </div>
+
+      <!-- Select Formulation Card (Updated with all 25 Kadhas) -->
+      <div class="card card-white" style="margin-top: 16px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+          <div class="section-title">SELECT FORMULATION</div>
+        </div>
+
+        <div class="formulation-select-wrapper">
+          <div class="custom-select interactive">
+            <select id="formulationSelect" name="formulation" onchange="updateFormulationUI(this.value)">
+              <option value="cck1">1. Respi-Clear (Cold & Decongestant)</option>
+              <option value="thr2">2. Throat-Soothe (Sore Throat)</option>
+              <option value="imm3">3. Immuno-Shield (Daily Immunity)</option>
+              <option value="fvr2">4. Jwar-Har (Fever Care)</option>
+              <option value="pch5">5. Pachan-Agni (Digestion Boost)</option>
+              <option value="drh1">6. Gastri-Calm (Anti-Bloat & Gas)</option>
+              <option value="acd7">7. Amla-Pittahar (Acidity Relief)</option>
+              <option value="slp8">8. Nidra-Ananda (Sleep Support)</option>
+              <option value="str9">9. Tension-Relief (Stress & Fatigue)</option>
+              <option value="jnt10">10. Sandhi-Ease (Joint & Muscle)</option>
+              <option value="nrg11">11. Urja-Vitality (Morning Energy)</option>
+              <option value="pms12">12. Stri-Mitra (Menstrual Relief)</option>
+              <option value="met13">13. Metabo-Burn (Metabolism)</option>
+              <option value="cgh14">14. Kapa-Cough (Dry Cough Relief)</option>
+              <option value="skn15">15. Skin-Glow (Blood Detox)</option>
+              <option value="hd16">16. Head-Clear (Sinus & Headache)</option>
+              <option value="alg17">17. Shvasa-Pure (Allergy Defense)</option>
+              <option value="oral18">18. Mukh-Fresh (Oral & Gum Care)</option>
+              <option value="sht19">19. Sheetal-Cool (Body Heat Reducer)</option>
+              <option value="pst20">20. Post-Meal Sip (Digestant Refresher)</option>
+              <option value="vat21">21. Vata-Balancing (Cold Extremities)</option>
+              <option value="vcl22">22. Vocalist-Care (Voice Loss Support)</option>
+              <option value="nvn23">23. Chardi-Nivar (Nausea & Motion Sickness)</option>
+              <option value="det24">24. To-Tox Flush (Post-Junk Recovery)</option>
+              <option value="chy25">25. Chai-Rejuvenator (All-Round Daily Tonic)</option>
+            </select>
+            <div class="select-content">
+              <div class="select-text">
+                <h4 id="selTitle">Respi-Clear</h4>
+                <p id="selDesc">CODE: cck1</p>
+              </div>
+              <div class="select-arrow">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </div>
+            </div>
+          </div>
+          <button class="btn-pencil interactive" title="Customize" onclick="alert('Customize Formulation Options')">✏️</button>
+        </div>
+
+        <div class="dispense-actions">
+          <button class="dispense-btn btn-drink" onclick="dispenseAction('Drink')">
+            <span class="title">Drink</span><span class="sub">Dispense into cup</span>
+          </button>
+          <button class="dispense-btn btn-pouch" onclick="dispenseAction('Pouch')">
+            <span class="title">Pouch</span><span class="sub">Sealed travel pack</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISPENSING SUB-PAGE -->
+    <div id="tab-dispensing" class="hidden">
+      <div class="prep-header">
+        <h2 id="prepTitle">Preparing Respi-Clear</h2>
+        <p id="prepSub">Extracting goodness from natural herbs...</p>
+      </div>
+
+      <div class="prep-main-card">
+        <div class="ring-box">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+            <circle class="ring-fill" id="ringFill" cx="50" cy="50" r="45"></circle>
+          </svg>
+          <span class="ring-text" id="ringPct">0%</span>
+        </div>
+
+        <div class="prep-steps">
+          <div class="step-item" id="step-1"><div class="step-icon">✓</div><span>Dispensing ingredients</span></div>
+          <div class="step-item" id="step-2"><div class="step-icon">✓</div><span>Grinding & blending</span></div>
+          <div class="step-item" id="step-3"><div class="step-icon">✓</div><span>Brewing in progress</span></div>
+          <div class="step-item" id="step-4"><div class="step-icon">✓</div><span>Herbal filtration</span></div>
+          <div class="step-item" id="step-5"><div class="step-icon">✓</div><span>Dispensing formulation</span></div>
+        </div>
+      </div>
+
+      <div class="prep-meta-grid">
+        <div class="prep-meta-box">
+          <div class="prep-meta-icon">☕</div>
+          <div class="prep-meta-text"><span class="prep-meta-label">Output</span><span class="prep-meta-val" id="dispOutputVal">Hot Brew</span></div>
+        </div>
+        <div class="prep-meta-box">
+          <div class="prep-meta-icon">📦</div>
+          <div class="prep-meta-text"><span class="prep-meta-label">Amount</span><span class="prep-meta-val" id="dispServingVal">150 ml</span></div>
+        </div>
+      </div>
+
+      <div class="eta-banner">
+        <div class="eta-icon">⏱️</div>
+        <div class="eta-text"><h5>Estimated time remaining</h5><p id="etaCountdown">45 seconds</p></div>
+      </div>
+
+      <button class="btn-back interactive hidden" id="prepDoneBtn" style="width:100%; justify-content:center; padding: 14px;" onclick="finishDispensing()">
+        Done • Return to Vedic AI
+      </button>
+
+      <div class="motto-footer">Brew. Heal. Repeat.</div>
+    </div>
+
+    <!-- SUB-PAGE VIEW -->
+    <div id="tab-subpage" class="hidden">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text-dark);" id="subPageTitle">History</h2>
+        <button class="btn-back interactive" style="padding: 8px 14px;" onclick="closeSubPage()">Back</button>
+      </div>
+
+      <div id="subPageContent">
+        <div class="empty-state-card" id="emptyStatePlaceholder">
+          <div>
+            <div class="empty-state-title" id="emptyStateTitle">No History Yet</div>
+            <div class="empty-state-text" id="emptyStateText" style="margin-top: 4px;">Your brewed formulations will appear here.</div>
+          </div>
+        </div>
+        <div class="history-list-container hidden" id="historyListContainer"></div>
+        <div class="history-list-container hidden" id="reportsListContainer"></div>
+      </div>
+    </div>
+
+    <!-- MACHINE TAB (Updated 12 Hoppers) -->
+    <div id="tab-machine" class="hidden">
+      <div class="machine-status-card">
+        <div class="machine-status-item"><span class="machine-status-label">Machine Temp</span><span class="machine-status-value">94°C</span></div>
+        <div style="height: 24px; width: 1px; background: var(--border-color);"></div>
+        <div class="machine-status-item"><span class="machine-status-label">Machine Status</span><span class="machine-status-value" style="color: var(--accent-green);">Ready</span></div>
+      </div>
+
+      <button class="btn-flush interactive" onclick="triggerBoilerFlush()">Boiler Flush</button>
+
+      <div class="card" style="margin-bottom: 16px;">
+        <div class="hopper-header">
+          <div class="section-title"><div class="status-dot"></div> HOPPER ARRAY STATUS</div>
+          <div class="badge-pill" style="background: var(--white); border: 1px solid var(--border-color); color: var(--text-dark);">12 / 12 Active</div>
+        </div>
+
+        <div class="hopper-grid">
+          <div class="hop-item"><div class="hop-label">Slot 1: <span id="slot-1">Tulsi</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 85%;"></div></div><div class="hop-pct">85%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 7: <span id="slot-7">Mulethi</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 95%;"></div></div><div class="hop-pct">95%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 2: <span id="slot-2">Dry Ginger</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 72%;"></div></div><div class="hop-pct">72%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 8: <span id="slot-8">Giloy</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 80%;"></div></div><div class="hop-pct">80%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 3: <span id="slot-3">Black Pepper</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 40%;"></div></div><div class="hop-pct">40%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 9: <span id="slot-9">Ajwain</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-orange" style="width: 35%;"></div></div><div class="hop-pct">35%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 4: <span id="slot-4">Cinnamon</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 90%;"></div></div><div class="hop-pct">90%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 10: <span id="slot-10">Ashwagandha</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 60%;"></div></div><div class="hop-pct">60%</div></div></div>
+          
+          <div class="hop-item"><div class="hop-label">Slot 5: <span id="slot-5">Clove</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 65%;"></div></div><div class="hop-pct">65%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 11: <span id="slot-11">Cardamom</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 88%;"></div></div><div class="hop-pct">88%</div></div></div>
+
+          <div class="hop-item"><div class="hop-label">Slot 6: <span id="slot-6">Turmeric</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 75%;"></div></div><div class="hop-pct">75%</div></div></div>
+          <div class="hop-item"><div class="hop-label">Slot 12: <span id="slot-12">Fennel Seeds</span></div><div class="hop-bar-row"><div class="progress-bg"><div class="progress-fill fill-green" style="width: 82%;"></div></div><div class="hop-pct">82%</div></div></div>
+        </div>
+
+        <button class="btn-update-ingredients interactive" onclick="openIngredientModal()">Update Ingredients</button>
+      </div>
+
+      <div class="card">
+        <div class="section-title">STATS FOR NERDS (LOGS)</div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-label">Device ID</div><div class="stat-value">IYV-89X2</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Bits</div><div class="stat-value">1024 kbps</div></div>
+          <div class="stat-box"><div class="stat-label">Est. Prep</div><div class="stat-value">2m 45s</div></div>
+          <div class="stat-box"><div class="stat-label">Com. Delay</div><div class="stat-value">12ms</div></div>
+          <div class="logs-box" id="logsBox">> system init... OK<br>> boiler_temp: 94C<br>> awaiting command...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-vedic" onclick="switchTab('vedic')">Vedic AI</button>
+    <button class="nav-item" id="nav-machine" onclick="switchTab('machine')">Machine</button>
+  </div>
+
+  <!-- Update Ingredients Modal -->
+  <div class="modal-overlay hidden" id="ingredientModal">
+    <div class="modal-card">
+      <h3>Update Slot Ingredient</h3>
+      <label style="font-size: 12px; font-weight:600; color: var(--text-sub);">Select Slot:</label>
+      <select id="modalSlotSelect">
+        <option value="1">Slot 1: Tulsi</option>
+        <option value="2">Slot 2: Dry Ginger</option>
+        <option value="3">Slot 3: Black Pepper</option>
+        <option value="4">Slot 4: Cinnamon</option>
+        <option value="5">Slot 5: Clove</option>
+        <option value="6">Slot 6: Turmeric</option>
+        <option value="7">Slot 7: Mulethi</option>
+        <option value="8">Slot 8: Giloy</option>
+        <option value="9">Slot 9: Ajwain</option>
+        <option value="10">Slot 10: Ashwagandha</option>
+        <option value="11">Slot 11: Cardamom</option>
+        <option value="12">Slot 12: Fennel Seeds</option>
+      </select>
+      <label style="font-size: 12px; font-weight:600; color: var(--text-sub);">Ingredient Name:</label>
+      <input type="text" id="modalIngredientInput" placeholder="e.g. Tulsi" />
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="closeIngredientModal()">Cancel</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="saveIngredientUpdate()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Select Quantity Modal -->
+  <div class="modal-overlay hidden" id="quantityModal">
+    <div class="modal-card">
+      <h3 id="qtyModalTitle">Select Quantity</h3>
+      <label style="font-size: 12px; font-weight:600; color: var(--text-sub);">Amount:</label>
+      <select id="qtySelect"></select>
+      <div class="modal-actions">
+        <button class="btn-modal btn-modal-cancel interactive" onclick="closeQuantityModal()">Cancel</button>
+        <button class="btn-modal btn-modal-save interactive" onclick="confirmDispense()">Start Dispense</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let prepTimerInterval = null;
+  const historyDatabase = []; 
+  const reportsDatabase = []; 
+  
+  const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
+  const CHAR_RX_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
+  let bleDevice = null;
+  let bleServer = null;
+  let rxChar = null;
+
+  function getTimestamp() { return new Date().toTimeString().split(' ')[0]; }
+  function writeToLog(message) {
+    const logs = document.getElementById('logsBox');
+    if (logs) { logs.innerHTML += `<br>> [${getTimestamp()}] ${message}`; logs.scrollTop = logs.scrollHeight; }
+  }
+
+  async function toggleStatus() {
+    if (bleDevice && bleDevice.gatt.connected) { bleDevice.gatt.disconnect(); } 
+    else {
+      if (!navigator.bluetooth) { alert('Web Bluetooth is not supported in this browser.'); return; }
+      try {
+        bleDevice = await navigator.bluetooth.requestDevice({ filters: [{ services: [SERVICE_UUID] }], optionalServices: [SERVICE_UUID] });
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+        bleServer = await bleDevice.gatt.connect();
+        const svc = await bleServer.getPrimaryService(SERVICE_UUID);
+        rxChar = await svc.getCharacteristic(CHAR_RX_UUID);
+
+        document.getElementById('statusDot').classList.remove('disconnected');
+        document.getElementById('statusText').innerText = 'Connected';
+        writeToLog(`BLE Connected: ${bleDevice.name}`);
+      } catch (error) { writeToLog(`BLE Error: ${error.message}`); }
+    }
+  }
+
+  function onDisconnected() {
+    document.getElementById('statusDot').classList.add('disconnected');
+    document.getElementById('statusText').innerText = 'Disconnected';
+    rxChar = null;
+    writeToLog("BLE Disconnected.");
+  }
+
+  async function sendBLECommand(cmd) {
+    if (!rxChar) return;
+    try { await rxChar.writeValueWithResponse(new TextEncoder().encode(cmd)); writeToLog(`BLE TX: ${cmd}`); } 
+    catch(e) { writeToLog(`BLE TX Error: ${e.message}`); }
+  }
+
+  function triggerUpload() { document.getElementById('fileUpload').click(); }
+
+  function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const fileName = file.name;
+    const now = new Date();
+    
+    reportsDatabase.unshift({ fileName, dateStr: now.toLocaleDateString(), timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+    writeToLog(`uploaded report: ${fileName}`);
+
+    const chatBox = document.getElementById('chatBox');
+    chatBox.innerHTML += `<div class="chat-msg msg-user"><em>📄 Uploaded: ${fileName}</em></div>`;
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    setTimeout(() => {
+      const nameLower = fileName.toLowerCase();
+      let aiText = `I have received your report (${fileName}). `;
+      let formulationToSelect = 'cck1';
+
+      if (nameLower.includes('fever') || nameLower.includes('temp')) {
+        aiText += "I suggest taking Jwar-Har (Fever Care)."; formulationToSelect = 'fvr2';
+      } else if (nameLower.includes('stomach') || nameLower.includes('digestion')) {
+        aiText += "I recommend Pachan-Agni for digestion."; formulationToSelect = 'pch5';
+      } else {
+        aiText += "For general wellness, I suggest Respi-Clear."; formulationToSelect = 'cck1';
+      }
+
+      chatBox.innerHTML += `<div class="chat-msg msg-ai">${aiText}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+      selectFormulationValue(formulationToSelect);
+    }, 750);
+    event.target.value = '';
+  }
+
+  function updateReportsUI() {
+    const container = document.getElementById('reportsListContainer');
+    document.getElementById('emptyStatePlaceholder').classList.toggle('hidden', reportsDatabase.length > 0);
+    container.classList.toggle('hidden', reportsDatabase.length === 0);
+    container.innerHTML = reportsDatabase.map(item => `
+      <div class="history-item-card">
+        <div class="history-item-header"><div class="history-item-title">📄 ${item.fileName}</div><div class="history-item-date">${item.dateStr} • ${item.timeStr}</div></div>
+        <div class="history-item-form" style="color: var(--text-sub); background: var(--bg-main);">Status: Saved & Analyzed</div>
+      </div>`).join('');
+  }
+
+  function saveToHistory(title, form, amount) {
+    const now = new Date();
+    historyDatabase.unshift({ title, form, amount, dateStr: now.toLocaleDateString(), timeStr: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) });
+  }
+
+  function updateHistoryUI() {
+    const container = document.getElementById('historyListContainer');
+    document.getElementById('emptyStatePlaceholder').classList.toggle('hidden', historyDatabase.length > 0);
+    container.classList.toggle('hidden', historyDatabase.length === 0);
+    container.innerHTML = historyDatabase.map(item => `
+      <div class="history-item-card">
+        <div class="history-item-header"><div class="history-item-title">${item.title}</div><div class="history-item-date">${item.dateStr} • ${item.timeStr}</div></div>
+        <div class="history-item-form">Format: ${item.form} (${item.amount})</div>
+      </div>`).join('');
+  }
+
+  function triggerBoilerFlush() {
+    writeToLog("boiler_flush initiated locally");
+    sendBLECommand("CMD|BOILER_FLUSH");
+    alert("Boiler Flush cycle initialized.");
+  }
+
+  function switchTab(tabId) {
+    closeSubPage();
+    document.getElementById('nav-vedic').classList.toggle('active', tabId === 'vedic');
+    document.getElementById('nav-machine').classList.toggle('active', tabId === 'machine');
+    document.getElementById('tab-vedic').classList.toggle('hidden', tabId !== 'vedic');
+    document.getElementById('tab-machine').classList.toggle('hidden', tabId !== 'machine');
+  }
+
+  function openSubPage(pageTitle) {
+    document.getElementById('tab-vedic').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.add('hidden');
+    document.getElementById('tab-subpage').classList.remove('hidden');
+    document.getElementById('subPageTitle').innerText = pageTitle;
+    
+    if (pageTitle === 'History') {
+      document.getElementById('reportsListContainer').classList.add('hidden');
+      updateHistoryUI();
+    } else if (pageTitle === 'Reports') {
+      document.getElementById('historyListContainer').classList.add('hidden');
+      updateReportsUI();
+    }
+  }
+
+  function closeSubPage() {
+    document.getElementById('tab-subpage').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.add('hidden');
+    document.getElementById('tab-vedic').classList.remove('hidden');
+  }
+
+  function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+  function sendMessage() {
+    const inputField = document.getElementById('chatInput');
+    const msgText = inputField.value.trim();
+    if(msgText !== "") {
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerHTML += `<div class="chat-msg msg-user">${msgText}</div>`;
+      inputField.value = '';
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      setTimeout(() => {
+        const text = msgText.toLowerCase();
+        let reply = "I have noted your symptoms. Try Respi-Clear for general wellness.";
+        let target = "cck1";
+
+        if (text.includes('fever') || text.includes('ache')) { reply = "For fever and body soreness, Jwar-Har is recommended."; target = "fvr2"; }
+        else if (text.includes('sleep') || text.includes('insomnia')) { reply = "For sleep support, try Nidra-Ananda."; target = "slp8"; }
+        else if (text.includes('throat') || text.includes('cough')) { reply = "For throat strain, try Throat-Soothe."; target = "thr2"; }
+        else if (text.includes('bloat') || text.includes('gas')) { reply = "For gas and bloating, Gastri-Calm is ideal."; target = "drh1"; }
+
+        chatBox.innerHTML += `<div class="chat-msg msg-ai">${reply}</div>`;
+        chatBox.scrollTop = chatBox.scrollHeight;
+        selectFormulationValue(target);
+      }, 700);
+    }
+  }
+
+  function selectFormulationValue(val) {
+    document.getElementById('formulationSelect').value = val;
+    updateFormulationUI(val);
+  }
+
+  function updateFormulationUI(val) {
+    const selectElem = document.getElementById('formulationSelect');
+    const titleObj = document.getElementById('selTitle');
+    const descObj = document.getElementById('selDesc');
+    const selectedOptionText = selectElem.options[selectElem.selectedIndex].text;
+    
+    titleObj.innerText = selectedOptionText.split('. ')[1].split(' (')[0];
+    descObj.innerText = `CODE: ${val}`;
+  }
+
+  let currentBrewTitle = "", currentBrewForm = "", pendingDispenseType = "", currentAmount = "";
+
+  function dispenseAction(type) {
+    pendingDispenseType = type;
+    currentBrewTitle = document.getElementById('selTitle').innerText;
+    const qtySelect = document.getElementById('qtySelect');
+    qtySelect.innerHTML = '';
+    
+    if (type === 'Drink') {
+      document.getElementById('qtyModalTitle').innerText = 'Select Volume (Liquid)';
+      ['100 ml', '120 ml', '150 ml', '180 ml'].forEach(vol => { qtySelect.innerHTML += `<option value="${vol}">${vol}</option>`; });
+    } else {
+      document.getElementById('qtyModalTitle').innerText = 'Select Weight (Powder/Pouch)';
+      ['10 grams', '20 grams', '30 grams'].forEach(wt => { qtySelect.innerHTML += `<option value="${wt}">${wt}</option>`; });
+    }
+    document.getElementById('quantityModal').classList.remove('hidden');
+  }
+
+  function closeQuantityModal() { document.getElementById('quantityModal').classList.add('hidden'); }
+
+  function confirmDispense() {
+    currentAmount = document.getElementById('qtySelect').value;
+    currentBrewForm = pendingDispenseType;
+    closeQuantityModal();
+
+    document.getElementById('prepTitle').innerText = `Preparing ${currentBrewTitle}`;
+    document.getElementById('dispOutputVal').innerText = (currentBrewForm === 'Drink') ? 'Hot Brew' : 'Hermetic Seal';
+    document.getElementById('dispServingVal').innerText = currentAmount;
+    
+    document.getElementById('tab-vedic').classList.add('hidden');
+    document.getElementById('tab-dispensing').classList.remove('hidden');
+
+    writeToLog(`dispensing ${currentBrewTitle} form: ${currentBrewForm.toLowerCase()} amount: ${currentAmount}`);
+    sendBLECommand(`DISPENSE|${currentBrewTitle.replace(/\s+/g, '_')}|${currentBrewForm}|${currentAmount.replace(/\s+/g, '')}`);
+
+    runDispenseProgress();
+  }
+
+  function runDispenseProgress() {
+    let progress = 0;
+    const totalTimeSec = 10;
+    document.getElementById('prepDoneBtn').classList.add('hidden');
+
+    if (prepTimerInterval) clearInterval(prepTimerInterval);
+
+    prepTimerInterval = setInterval(() => {
+      progress += 2; 
+      if (progress > 100) progress = 100;
+
+      document.getElementById('ringFill').style.strokeDashoffset = 283 - (283 * progress / 100);
+      document.getElementById('ringPct').innerText = `${progress}%`;
+      document.getElementById('etaCountdown').innerText = `${Math.max(0, Math.ceil(totalTimeSec * (1 - progress / 100)))} seconds`;
+
+      if (progress >= 100) {
+        clearInterval(prepTimerInterval);
+        document.getElementById('prepSub').innerText = 'Your fresh herbal infusion is ready!';
+        document.getElementById('prepDoneBtn').classList.remove('hidden');
+        writeToLog(`completed ${currentBrewTitle}`);
+        saveToHistory(currentBrewTitle, currentBrewForm, currentAmount);
+      }
+    }, 200);
+  }
+
+  function finishDispensing() { closeSubPage(); }
+  function openIngredientModal() { document.getElementById('ingredientModal').classList.remove('hidden'); }
+  function closeIngredientModal() { document.getElementById('ingredientModal').classList.add('hidden'); document.getElementById('modalIngredientInput').value = ''; }
+  
+  function saveIngredientUpdate() {
+    const slotNum = document.getElementById('modalSlotSelect').value;
+    const newName = document.getElementById('modalIngredientInput').value.trim();
+    if(newName !== "") {
+      document.getElementById('slot-' + slotNum).textContent = newName;
+      writeToLog(`hopper slot ${slotNum} updated to ${newName}`);
+    }
+    closeIngredientModal();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iYurva App Frontend</title>
+<style>
+  :root {
+    --dark-green: #0a6b3d;
+    --mid-green: #9fc372;
+    --light-green-bg: #dcedd6;
+    --card-bg: #dcedd6;
+    --card-border: #b5cfb5;
+    --text-dark: #000000;
+  }
+
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+  }
+
+  /* Main Phone Container */
+  .app-container {
+    width: 400px;
+    background-color: #ffffff;
+    border: 8px solid #000;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 20px;
+  }
+
+  /* Header */
+  .header {
+    background-color: var(--light-green-bg);
+    text-align: center;
+    padding: 15px;
+    border-bottom: 4px solid #000;
+    font-weight: bold;
+    font-size: 14px;
+  }
+  .header .logo {
+    font-style: italic;
+    color: var(--dark-green);
+    font-size: 20px;
+    margin-right: 5px;
+  }
+
+  .content {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* User Profile Row */
+  .user-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .user-icon {
+    width: 32px;
+    height: 32px;
+    background-color: #000;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+  .user-icon::after {
+    content: '';
+    width: 14px;
+    height: 14px;
+    background-color: #fff;
+    border-radius: 50%;
+    margin-bottom: 8px;
+  }
+  .user-icon::before {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 10px;
+    background-color: #fff;
+    border-radius: 11px 11px 0 0;
+    margin-top: 18px;
+  }
+  .user-name {
+    color: var(--dark-green);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .status-btn {
+    background-color: var(--mid-green);
+    color: #000;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: transform 0.1s ease, filter 0.1s ease;
+  }
+
+  /* Global Button Interactive States */
+  button {
+    transition: transform 0.1s ease, filter 0.1s ease;
+    cursor: pointer;
+  }
+  button:hover, .status-btn:hover {
+    filter: brightness(0.9);
+  }
+  button:active, .status-btn:active {
+    transform: scale(0.95);
+  }
+
+  /* Cards (Feeling, Hopper, Stats) */
+  .card {
+    background-color: var(--card-bg);
+    border: 3px solid #fff;
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15), inset 0 0 0 2px var(--card-border);
+  }
+
+  /* Feeling Card */
+  .feeling-title {
+    background-color: #abc978;
+    display: inline-block;
+    padding: 4px 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+  .input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+  .input-row input {
+    flex: 1;
+    border: none;
+    border-radius: 15px;
+    padding: 10px;
+    outline: none;
+  }
+  .icon-btn {
+    width: 35px;
+    height: 35px;
+    background-color: #fff;
+    border: none;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: var(--mid-green);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .icon-btn.plus { color: var(--dark-green); }
+
+  .action-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .action-row button {
+    flex: 1;
+    padding: 8px 0;
+    border: none;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 13px;
+    color: #fff;
+  }
+  .btn-history { background-color: var(--dark-green); }
+  .btn-reports { background-color: var(--mid-green); }
+  .btn-recipes { background-color: #fff; color: var(--dark-green) !important; }
+
+  /* Formulation Section (Dropdown changes here) */
+  .section-title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 8px;
+  }
+  .dropdown-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  /* Select Styling to match original div */
+  select.dropdown {
+    flex: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #fff;
+    border: 3px solid var(--mid-green);
+    border-radius: 15px;
+    padding: 10px 15px;
+    font-weight: bold;
+    font-size: 15px;
+    font-family: inherit;
+    color: #000;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    outline: none;
+    cursor: pointer;
+    /* Custom SVG Arrow inside the Select to match the original "V" */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239fc372' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 1.2em;
+    padding-right: 40px; /* Leave space for the custom arrow */
+  }
+
+  select.dropdown:focus {
+    border-color: var(--dark-green);
+  }
+
+  .add-formulation {
+    background-color: var(--mid-green);
+    border: none;
+    border-radius: 10px;
+    width: 45px;
+    color: #fff;
+    font-size: 30px;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+  .formulation-actions {
+    display: flex;
+    gap: 10px;
+  }
+  .formulation-actions button {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff;
+  }
+  .btn-drink { background-color: var(--dark-green); }
+  .btn-pouch { background-color: var(--mid-green); color: #000 !important;}
+
+  /* Hopper Section */
+  .hopper-title {
+    color: var(--dark-green);
+    font-weight: bold;
+    margin-bottom: 10px;
+    font-size: 15px;
+  }
+  .hopper-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 10px;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  .update-btn {
+    width: 100%;
+    background-color: var(--dark-green);
+    color: #fff;
+    border: none;
+    padding: 8px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  /* Boiler Flush */
+  .boiler-flush {
+    width: 100%;
+    background-color: var(--mid-green);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 18px;
+  }
+
+  /* Stats Section */
+  .stats-card {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+  }
+  .stats-info {
+    flex: 1;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1.6;
+  }
+  .stats-logs {
+    flex: 1;
+    background-color: var(--card-bg);
+    border: 1px solid #fff;
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+  }
+
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Header -->
+  <div class="header">
+    <span class="logo">iYurva</span> powered by Vedic AI
+  </div>
+
+  <div class="content">
+    <!-- User Row -->
+    <div class="user-row">
+      <div class="user-info">
+        <div class="user-icon"></div>
+        <div class="user-name">Hello user !</div>
+      </div>
+      <div class="status-btn">Connected</div>
+    </div>
+
+    <!-- Feeling Card -->
+    <div class="card">
+      <div class="feeling-title">How are you feeling today ?</div>
+      <div class="input-row">
+        <input type="text" placeholder="Type here..." />
+        <button class="icon-btn plus" aria-label="Add">+</button>
+        <button class="icon-btn" aria-label="Submit">></button>
+      </div>
+      <div class="action-row">
+        <button class="btn-history">History</button>
+        <button class="btn-reports">Reports</button>
+        <button class="btn-recipes">Recipes</button>
+      </div>
+    </div>
+
+    <!-- Formulation Section -->
+    <div>
+      <div class="section-title">Select Formulation</div>
+      <div class="dropdown-row">
+        <!-- Replaced Div with an actual Select Dropdown -->
+        <select class="dropdown" name="formulation" id="formulation">
+          <option value="cck1">Common Cold Kadha (cck1)</option>
+          <option value="fk">Fever Karha</option>
+          <option value="dk">Diarrhea Karha</option>
+        </select>
+        <button class="add-formulation" aria-label="Add Formulation">+</button>
+      </div>
+      <div class="formulation-actions">
+        <button class="btn-drink">Drink</button>
+        <button class="btn-pouch">Pouch</button>
+      </div>
+    </div>
+
+    <!-- Hopper Status Card -->
+    <div class="card">
+      <div class="hopper-title">Hopper Array Status</div>
+      <div class="hopper-grid">
+        <div>Slot 1:</div><div>Slot 7:</div>
+        <div>Slot 2:</div><div>Slot 8:</div>
+        <div>Slot 3:</div><div>Slot 9:</div>
+        <div>Slot 4:</div><div>Slot 10:</div>
+        <div>Slot 5:</div><div>Slot 11:</div>
+        <div>Slot 6:</div><div>Slot 12:</div>
+      </div>
+      <button class="update-btn">Update Ingredients</button>
+    </div>
+
+    <!-- Boiler Flush -->
+    <button class="boiler-flush">Boiler Flush</button>
+
+    <!-- Stats Section -->
+    <div>
+      <div class="section-title">Stats for Nerds</div>
+      <div class="card stats-card">
+        <div class="stats-info">
+          <div>Device id:</div>
+          <div>Device Status:</div>
+          <div>Est. Prep. Time:</div>
+          <div>Com. bits:</div>
+          <div>Com. delay:</div>
+        </div>
+        <div class="stats-logs">Logs</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
